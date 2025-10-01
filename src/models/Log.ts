@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface ILog extends Document {
   userId: mongoose.Schema.Types.ObjectId;
   timestamp: Date;
+  title: string;
   content: string;
   category?: string;
   duration?: number;
@@ -11,6 +12,7 @@ export interface ILog extends Document {
 const LogSchema: Schema = new Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   timestamp: { type: Date, required: true, default: Date.now },
+  title: { type: String, required: true },
   content: { type: String, required: true },
   category: { type: String },
   duration: { type: Number },

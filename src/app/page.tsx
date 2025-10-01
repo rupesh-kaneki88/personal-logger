@@ -57,9 +57,9 @@ export default function Home() {
   }
 
   return (
-    <div ref={containerRef} className="font-sans items-center justify-items-center min-h-[80vh] p-8 sm:p-20 text-white background">
+    <div ref={containerRef} className="font-sans items-center justify-items-center min-h-[80vh] p-2 sm:p-2 text-white background">
       <main className="w-full flex flex-col items-center sm:items-start">
-        <h1 className="text-4xl self-center font-bold">Welcome, {session.user?.name}!</h1>
+        <h1 className="text-4xl mt-2 md:mt-4 self-center font-bold">Welcome, {session.user?.name}!</h1>
         <div className="log-entry-form w-full">
           <LogEntryForm />
         </div>

@@ -7,8 +7,9 @@ import { useGSAP } from "@gsap/react";
 
 export default function LogEntryForm() {
   const { data: session } = useSession();
+  const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [category, setCategory] = useState("Technical");
+  const [category, setCategory] = useState("None");
   const [duration, setDuration] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,8 +41,9 @@ export default function LogEntryForm() {
         },
         body: JSON.stringify({
           userId: session.user.id,
+          title,
           content,
-          category,
+          category: category === "None" ? undefined : category,
           duration,
         }),
       });
@@ -52,8 +54,9 @@ export default function LogEntryForm() {
       }
 
       setSuccess("Log saved successfully!");
+      setTitle("");
       setContent("");
-      setCategory("Technical");
+      setCategory("None");
       setDuration(undefined);
 
       // Animate the form on success
@@ -73,13 +76,26 @@ export default function LogEntryForm() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4 text-white">
-    <div ref={formRef} className="w-full max-w-4xl p-8 space-y-6 bg-gray-800 rounded-lg shadow-xl border border-gray-700 sm:w-full md:w-5/6 lg:w-3/4 xl:w-5/6">
+    <div className="flex flex-col items-center justify-center p-4 md:p6 text-white">
+    <div ref={formRef} className="w-full max-w-6xl p-8 space-y-6 bg-gray-800 rounded-lg mt-4 md:mt-6 shadow-xl border border-gray-700 sm:w-full md:w-5/6 lg:w-5/6 xl:w-5/6">
     <h1 className="text-3xl font-bold text-center text-white">New Log Entry</h1>
       {error && <p className="text-red-400 text-center">{error}</p>}
       {success && <p className="text-green-400 text-center">{success}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="mb-4">
+        <label htmlFor="title" className="sr-only">
+          Title:
+        </label>
+        <input
+          id="title"
+          className="appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm bg-gray-700"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+          placeholder="Enter a title for your log..."
+        />
+      </div>
       <div className="mb-4">
         <label htmlFor="content" className="sr-only">
           Work Description:
@@ -105,9 +121,9 @@ export default function LogEntryForm() {
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         >
+          <option value="None">None</option>
           <option value="Technical">Technical</option>
           <option value="Non-Technical">Non-Technical</option>
-          <option value="None">None</option>
         </select>
       </div>
 

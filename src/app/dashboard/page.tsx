@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react"; // Use useSession for client-side session
 import { Session } from "next-auth"; // Import Session type
+import Link from "next/link";
 
 // We will fetch logs and stats on the client side now,
 // as this component is marked "use client".
@@ -125,24 +126,37 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <h2 className="text-2xl font-bold mb-4">Recent Logs</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold">Recent Logs</h2>
+        <Link href="/logs" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+          View All
+        </Link>
+      </div>
       {loadingLogs ? (
         <p>Loading recent logs...</p>
       ) : logs.length === 0 ? (
         <p>No logs yet. Start logging your work!</p>
       ) : (
-        <div className="bg-gray-800 shadow-md rounded-lg p-4 mb-8">
-          <ul>
-            {logs.map((log) => (
-              <li key={log._id.toString()} className="border-b border-gray-700 last:border-b-0 py-2">
-                <p className="text-gray-200">{log.content}</p>
-                <p className="text-sm text-gray-400">
-                  Category: {log.category || "N/A"} | Duration: {log.duration || "N/A"} mins |{" "}
-                  {new Date(log.timestamp).toLocaleString()}
-                </p>
-              </li>
-            ))}
-          </ul>
+        <div className="relative h-48 mb-8"> {/* Adjust height as needed */}
+          {logs.slice(0, 3).map((log, index) => (
+            <div
+              key={log._id.toString()}
+              className={`absolute w-full bg-gray-800 shadow-md rounded-lg p-4 border border-gray-700 transition-all duration-300 ease-in-out`}
+              style={{
+                top: `${index * 20}px`, // Adjust stacking distance
+                zIndex: 3 - index, // Ensure most recent is on top
+                transform: `scale(${1 - index * 0.05})`, // Slight scale effect
+                opacity: 1 - index * 0.2, // Slight opacity effect
+              }}
+            >
+              <h3 className="text-lg font-semibold text-white">{log.title}</h3>
+              <p className="text-gray-200 line-clamp-2">{log.content}</p>
+              <p className="text-sm text-gray-400 mt-2">
+                Category: {log.category || "N/A"} | Duration: {log.duration || "N/A"} mins |{" "}
+                {new Date(log.timestamp).toLocaleString()}
+              </p>
+            </div>
+          ))}
         </div>
       )}
 

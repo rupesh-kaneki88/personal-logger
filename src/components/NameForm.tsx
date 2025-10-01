@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function NameForm() {
   const { data: session, update } = useSession();
+  const router = useRouter();
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +39,8 @@ export default function NameForm() {
       // Update the session with the new name
       await update({ name });
 
+      // Refresh the current route to re-fetch session data
+      router.refresh();
     } catch (err: any) {
       setError(err.message);
     } finally {

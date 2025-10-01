@@ -56,16 +56,30 @@ export const authOptions: AuthOptions = {
   ],
   adapter: MongoDBAdapter(clientPromise),
   callbacks: {
-    session: async ({ session, token, user }: { session: Session; token: JWT; user: User }) => {
-      console.log("Session Callback User:", user); // Log the user object
-      if (session?.user) {
-        // session.user.id = user.id; // Temporarily commented out
-        // Ensure user.id exists before assigning
-        if (user?.id) {
-          session.user.id = user.id;
-        } else if (token?.sub) { // Fallback to token.sub if user.id is not available
-          session.user.id = token.sub;
-        }
+    async jwt({ token, user, trigger, session }) {
+      // If the user is signing in, add their ID and name to the token
+      if (user) {
+        token.id = user.id;
+        token.name = user.name;
+      }
+
+      // If the session is being updated (e.g., with a new name)
+      if (trigger === "update" && session?.name) {
+        token.name = session.name;
+      }
+
+      // Ensure the user ID is always present
+      if (!token.id && token.sub) {
+        token.id = token.sub;
+      }
+
+      return token;
+    },
+    async session({ session, token }) {
+      // Add the user's ID and name from the token to the session
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.name = token.name as string;
       }
       return session;
     },
