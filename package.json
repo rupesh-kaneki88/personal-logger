@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.10.0",
+    "@google/generative-ai": "^0.24.1",
     "@gsap/react": "^2.1.2",
     "@sendgrid/mail": "^8.1.6",
     "@types/mongoose": "^5.11.96",

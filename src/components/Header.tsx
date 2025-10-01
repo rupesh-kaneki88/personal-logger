@@ -130,6 +130,16 @@ export default function Header() {
               Logs
             </Link>
           )}
+          {session && (
+            <Link
+              href="/reports"
+              className="header-item ml-6 px-4 py-2 rounded-md text-white transition-colors duration-200"
+              onMouseEnter={(e) => gsap.to(e.currentTarget, { scale: 1.1, ease: "elastic.out(1, 0.3)", duration: 0.5 })}
+              onMouseLeave={(e) => gsap.to(e.currentTarget, { scale: 1, ease: "elastic.out(1, 0.3)", duration: 0.5 })}
+            >
+              Reports
+            </Link>
+          )}
         </div>
         <div className="header-item hidden sm:block"> {/* Hide on small screens */}
           <SignInButton />
@@ -164,6 +174,15 @@ export default function Header() {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Logs
+            </Link>
+          )}
+          {session && (
+            <Link
+              href="/reports"
+              className="header-item px-4 py-2 rounded-md text-white transition-colors duration-200"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Reports
             </Link>
           )}
           <div className="header-item">

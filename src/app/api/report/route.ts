@@ -1,8 +1,10 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
-import Log from "../../../../models/Log";
-import dbConnect from "../../../../lib/dbConnect";
+import Report from "@/models/Report";
+import Log from "@/models/Log";
+import dbConnect from "@/lib/dbConnect";
 import { Session } from "next-auth";
 
 export async function POST(request: Request) {
@@ -19,7 +21,8 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { startDate, endDate } = body; // Expecting date range for report
+    console.log("Request body:", body);
+    const { startDate, endDate, title } = body; // Expecting date range and title for report
 
     const userId = session.user.id;
 
@@ -47,27 +50,37 @@ export async function POST(request: Request) {
       duration: log.duration,
     }));
 
-    // --- Placeholder for LLM API Call ---
-    // In a real application, you would send 'compiledLogs' to an LLM API
-    // and get a generated report back.
-    const llmGeneratedReport = `
-      --- LLM Generated Report (Placeholder) ---
-      Summary of work from ${startDate} to ${endDate}:
-      Total logs found: ${logs.length}
+    // --- LLM API Call ---
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-      Detailed logs:
-      ${compiledLogs.map(log => `- [${log.timestamp}] (${log.category || 'N/A'}) ${log.content} (${log.duration || 'N/A'} mins)`).join('\n')}
+    const prompt = `
+      You are a helpful assistant that analyzes work logs and generates a report.
+      The user has provided the following logs from ${startDate} to ${endDate}.
+      Please analyze these logs and provide a report with the following sections:
+      - Summary of work done
+      - Key themes or projects
+      - General tone/sentiment of the log entries
+      - Suggestions for areas of focus for the next period
 
-      Key themes: (LLM would identify these)
-      - ...
-
-      Sentiment: (LLM would analyze this)
-      - ...
-
-      Suggestions for next period: (LLM would provide these)
-      - ...
+      Here are the logs:
+      ${JSON.stringify(compiledLogs, null, 2)}
     `;
-    // --- End Placeholder ---
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const llmGeneratedReport = response.text().replace(/[#*]/g, '');
+
+    const newReport = new Report({
+      userId,
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+      reportContent: llmGeneratedReport,
+      title,
+    });
+
+    await newReport.save();
+    // --- End LLM API Call ---
 
     return new NextResponse(JSON.stringify({ report: llmGeneratedReport }), {
       status: 200,

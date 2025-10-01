@@ -24,6 +24,7 @@ export default function DashboardPage() {
   const [report, setReport] = useState<string | null>(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
+  const [reportTitle, setReportTitle] = useState("");
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -68,7 +69,7 @@ export default function DashboardPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ startDate, endDate }),
+        body: JSON.stringify({ startDate, endDate, title: reportTitle }),
       });
 
       if (!response.ok) {
@@ -187,6 +188,18 @@ export default function DashboardPage() {
               onChange={(e) => setEndDate(e.target.value)}
             />
           </div>
+          <div>
+            <label htmlFor="reportTitle" className="block text-gray-300 text-sm font-bold mb-2">
+              Report Title:
+            </label>
+            <input
+              type="text"
+              id="reportTitle"
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 text-white"
+              value={reportTitle}
+              onChange={(e) => setReportTitle(e.target.value)}
+            />
+          </div>
           <button
             onClick={handleGenerateReport}
             className="md:self-end bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
@@ -198,7 +211,15 @@ export default function DashboardPage() {
         {reportError && <p className="text-red-500 mb-4">{reportError}</p>}
         {report && (
           <div className="mt-4 p-4 bg-gray-700 rounded-md whitespace-pre-wrap">
-            <h3 className="text-xl font-semibold mb-2">Generated Report:</h3>
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-xl font-semibold">Generated Report:</h3>
+              <button
+                onClick={() => navigator.clipboard.writeText(report)}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-sm"
+              >
+                Copy
+              </button>
+            </div>
             <p>{report}</p>
           </div>
         )}
