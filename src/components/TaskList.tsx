@@ -1,8 +1,7 @@
 "use client";
 
 import { ITask } from '@/models/Task';
-import { useState, useRef } from 'react';
-import { toast } from 'sonner';
+import { useRef } from 'react';
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 
@@ -10,41 +9,16 @@ interface TaskListProps {
   tasks: ITask[];
   onTaskUpdated: (task: ITask) => void;
   onDeleteClick: (task: ITask) => void;
+  onEditClick: (task: ITask) => void;
+  onCompleteClick: (task: ITask) => void;
 }
 
-export default function TaskList({ tasks, onTaskUpdated, onDeleteClick }: TaskListProps) {
-  const [loadingTaskId, setLoadingTaskId] = useState<string | null>(null);
+export default function TaskList({ tasks, onTaskUpdated, onDeleteClick, onEditClick, onCompleteClick }: TaskListProps) {
   const listRef = useRef(null);
 
   useGSAP(() => {
     gsap.from(".task-item", { opacity: 0, y: 20, stagger: 0.1, duration: 0.5, ease: "power2.out" });
   }, { scope: listRef, dependencies: [tasks] });
-
-  const handleMarkComplete = async (task: ITask) => {
-    setLoadingTaskId(task._id.toString());
-    try {
-      const response = await fetch(`/api/tasks/${task._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ isCompleted: true }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to mark task as complete');
-      }
-
-      const updatedTask: ITask = await response.json();
-      onTaskUpdated(updatedTask);
-      toast.success('Task marked as complete and logged!');
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setLoadingTaskId(null);
-    }
-  };
 
   return (
     <div ref={listRef} className="bg-gray-800 rounded-lg shadow-xl border border-gray-700 p-4">
@@ -82,16 +56,20 @@ export default function TaskList({ tasks, onTaskUpdated, onDeleteClick }: TaskLi
               </div>
               <div className="flex space-x-2 mt-3 md:mt-0">
                 <button
-                  onClick={() => handleMarkComplete(task)}
+                  onClick={() => onCompleteClick(task)}
                   className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors duration-200"
-                  disabled={loadingTaskId === task._id.toString()}
                 >
-                  {loadingTaskId === task._id.toString() ? 'Completing...' : 'Complete'}
+                  Complete
+                </button>
+                <button
+                  onClick={() => onEditClick(task)}
+                  className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-md text-sm font-medium transition-colors duration-200"
+                >
+                  Edit
                 </button>
                 <button
                   onClick={() => onDeleteClick(task)}
                   className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-medium transition-colors duration-200"
-                  disabled={loadingTaskId === task._id.toString()}
                 >
                   Delete
                 </button>

@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import TaskEntryForm from '@/components/TaskEntryForm';
 import TaskList from '@/components/TaskList';
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';
+import EditTaskModal from '@/components/EditTaskModal';
 import { ITask } from '@/models/Task';
 import { toast } from 'sonner';
 import { gsap } from "gsap";
@@ -17,6 +18,10 @@ export default function TasksPage() {
   const [error, setError] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<ITask | null>(null);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [taskToComplete, setTaskToComplete] = useState<ITask | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState<ITask | null>(null);
 
   const pageRef = useRef(null);
 
@@ -91,6 +96,73 @@ export default function TasksPage() {
     setTaskToDelete(null);
   };
 
+  const handleCompleteClick = (task: ITask) => {
+    setTaskToComplete(task);
+    setShowCompleteModal(true);
+  };
+
+  const handleConfirmComplete = async () => {
+    if (!taskToComplete) return;
+    try {
+      const response = await fetch(`/api/tasks/${taskToComplete._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isCompleted: true }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to complete task');
+      }
+      const updatedTask: ITask = await response.json();
+      handleTaskUpdated(updatedTask);
+      toast.success('Task marked as complete!');
+    } catch (err: any) {
+      setError(err.message);
+      toast.error(err.message);
+    } finally {
+      setShowCompleteModal(false);
+      setTaskToComplete(null);
+    }
+  };
+
+  const handleCancelComplete = () => {
+    setShowCompleteModal(false);
+    setTaskToComplete(null);
+  };
+
+  const handleEditClick = (task: ITask) => {
+    setTaskToEdit(task);
+    setShowEditModal(true);
+  };
+
+  const handleSaveEditedTask = async (updatedTask: ITask) => {
+    try {
+      const response = await fetch(`/api/tasks/${updatedTask._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedTask),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update task');
+      }
+      const newTask: ITask = await response.json();
+      handleTaskUpdated(newTask);
+      setShowEditModal(false);
+      setTaskToEdit(null);
+    } catch (err: any) {
+      setError(err.message);
+      toast.error(err.message);
+    }
+  };
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setTaskToEdit(null);
+  };
+
   if (loading) return <div className="text-center text-white">Loading tasks...</div>;
   if (error) return <div className="text-center text-red-400">Error: {error}</div>;
 
@@ -106,6 +178,8 @@ export default function TasksPage() {
             tasks={tasks.filter(task => !task.isCompleted)}
             onTaskUpdated={handleTaskUpdated}
             onDeleteClick={handleDeleteClick}
+            onCompleteClick={handleCompleteClick}
+            onEditClick={handleEditClick}
           />
         </div>
       </div>
@@ -116,6 +190,23 @@ export default function TasksPage() {
           onClose={handleCancelDelete}
           onConfirm={handleConfirmDelete}
           message={`Are you sure you want to delete the task: "${taskToDelete.title}"?`}
+        />
+      )}
+
+      {showCompleteModal && taskToComplete && (
+        <DeleteConfirmationModal
+          isOpen={showCompleteModal}
+          onClose={handleCancelComplete}
+          onConfirm={handleConfirmComplete}
+          message={`Are you sure you want to mark the task as complete: "${taskToComplete.title}"?`}
+        />
+      )}
+
+      {showEditModal && taskToEdit && (
+        <EditTaskModal
+          task={taskToEdit}
+          onClose={handleCloseEditModal}
+          onSave={handleSaveEditedTask}
         />
       )}
     </div>

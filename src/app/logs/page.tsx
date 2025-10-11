@@ -45,7 +45,8 @@ export default function LogsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [logToDelete, setLogToDelete] = useState<{ id: string; title: string } | null>(null);
 
-  const handleDelete = (logId: string, logTitle: string) => {
+  const handleDelete = (e: React.MouseEvent, logId: string, logTitle: string) => {
+    e.stopPropagation();
     setLogToDelete({ id: logId, title: logTitle });
     setIsDeleteModalOpen(true);
   };
@@ -82,7 +83,8 @@ export default function LogsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentLog, setCurrentLog] = useState<any | null>(null);
 
-  const handleEdit = (log: any) => {
+  const handleEdit = (e: React.MouseEvent, log: any) => {
+    e.stopPropagation();
     setCurrentLog(log);
     setIsModalOpen(true);
   };
@@ -178,32 +180,40 @@ export default function LogsPage() {
       ) : (
         <div className="space-y-4">
           {logs.map((log) => (
-            <div key={log._id.toString()} className="bg-gray-800 shadow-md rounded-lg p-4 border border-gray-700">
+            <div
+              key={log._id.toString()}
+              className="bg-gray-800 shadow-md rounded-lg p-4 border border-gray-700 cursor-pointer"
+              onClick={() => toggleExpand(log._id.toString())}
+              role="button"
+              aria-expanded={expandedLogId === log._id.toString()}
+              aria-controls={`log-content-${log._id.toString()}`}
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  toggleExpand(log._id.toString());
+                }
+              }}
+            >
               <div className="flex justify-between items-center">
                 <h3 className="text-xl font-semibold text-white">{log.title}</h3>
                 <div className="flex space-x-2">
                   <button
-                    onClick={() => handleEdit(log)}
+                    onClick={(e) => handleEdit(e, log)}
                     className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-1 px-3 rounded text-sm"
                   >
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDelete(log._id.toString(), log.title)}
+                    onClick={(e) => handleDelete(e, log._id.toString(), log.title)}
                     className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm"
                   >
                     Delete
-                  </button>
-                  <button
-                    onClick={() => toggleExpand(log._id.toString())}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm"
-                  >
-                    {expandedLogId === log._id.toString() ? "Collapse" : "View"}
                   </button>
                 </div>
               </div>
               {/* Always render the div, but control its visibility and height with GSAP */}
               <div
+                id={`log-content-${log._id.toString()}`}
                 ref={(el) => (logContentRefs.current[log._id.toString()] = el)}
                 className="mt-4 border-t border-gray-700 pt-4"
                 style={{ display: expandedLogId === log._id.toString() ? "block" : "none", height: expandedLogId === log._id.toString() ? "auto" : 0 }}

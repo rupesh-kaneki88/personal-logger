@@ -4,29 +4,22 @@ import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
+import { ITask } from "@/models/Task";
 
-interface EditLogModalProps {
-  log: {
-    _id: string;
-    title: string;
-    content: string;
-    category?: string;
-    duration?: number;
-    timestamp: string;
-  };
+interface EditTaskModalProps {
+  task: ITask;
   onClose: () => void;
-  onSave: (updatedLog: any) => void;
+  onSave: (updatedTask: ITask) => void;
 }
 
-export default function EditLogModal({ log, onClose, onSave }: EditLogModalProps) {
+export default function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
   const modalContentRef = useRef(null);
-  const [title, setTitle] = useState(log.title);
-  const [content, setContent] = useState(log.content);
-  const [category, setCategory] = useState(log.category || "None");
-  const [duration, setDuration] = useState<number | undefined>(log.duration);
-  const [date, setDate] = useState<string>(
-    log.timestamp ? new Date(log.timestamp).toISOString().split("T")[0] : ""
+  const [title, setTitle] = useState(task.title);
+  const [description, setDescription] = useState(task.description);
+  const [dueDate, setDueDate] = useState<string>(
+    task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : ""
   );
+  const [priority, setPriority] = useState(task.priority || "Medium");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,12 +32,11 @@ export default function EditLogModal({ log, onClose, onSave }: EditLogModalProps
   }, { scope: modalContentRef });
 
   useEffect(() => {
-    setTitle(log.title);
-    setContent(log.content);
-    setCategory(log.category || "None");
-    setDuration(log.duration);
-    setDate(log.timestamp ? new Date(log.timestamp).toISOString().split("T")[0] : "");
-  }, [log]);
+    setTitle(task.title);
+    setDescription(task.description);
+    setDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : "");
+    setPriority(task.priority || "Medium");
+  }, [task]);
 
   const handleCloseAnimation = () => {
     gsap.to(modalContentRef.current, {
@@ -52,7 +44,7 @@ export default function EditLogModal({ log, onClose, onSave }: EditLogModalProps
       opacity: 0,
       ease: "elastic.in(1, 0.75)",
       duration: 0.5,
-      onComplete: onClose, // Call original onClose after animation
+      onComplete: onClose,
     });
   };
 
@@ -66,28 +58,22 @@ export default function EditLogModal({ log, onClose, onSave }: EditLogModalProps
       setLoading(false);
       return;
     }
-    if (!content.trim()) {
-      setError("Content cannot be empty.");
-      setLoading(false);
-      return;
-    }
 
     const loadingToast = toast.loading("Saving changes...");
     try {
-      const updatedLog = {
-        _id: log._id,
+      const updatedTask = {
+        ...task,
         title,
-        content,
-        category: category === "None" ? undefined : category,
-        duration,
-        timestamp: date ? new Date(date) : undefined,
+        description,
+        dueDate: dueDate ? new Date(dueDate) : undefined,
+        priority,
       };
-      await onSave(updatedLog); // Await onSave as it will now handle the API call
-      toast.success("Log updated successfully!", { id: loadingToast });
+      await onSave(updatedTask as ITask);
+      toast.success("Task updated successfully!", { id: loadingToast });
       onClose();
     } catch (err: any) {
       setError(err.message);
-      toast.error(err.message || "Failed to update log.", { id: loadingToast });
+      toast.error(err.message || "Failed to update task.", { id: loadingToast });
     } finally {
       setLoading(false);
     }
@@ -99,7 +85,7 @@ export default function EditLogModal({ log, onClose, onSave }: EditLogModalProps
         ref={modalContentRef}
         className="bg-gray-800 p-6 sm:p-8 rounded-lg shadow-xl w-full max-w-sm sm:max-w-md lg:max-w-lg border border-gray-700 text-white"
       >
-        <h2 className="text-2xl font-bold mb-4">Edit Log Entry</h2>
+        <h2 className="text-2xl font-bold mb-4">Edit Task</h2>
         {error && <p className="text-red-400 mb-4">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -114,49 +100,37 @@ export default function EditLogModal({ log, onClose, onSave }: EditLogModalProps
             />
           </div>
           <div>
-            <label htmlFor="edit-content" className="block text-sm font-medium text-gray-300">Content</label>
+            <label htmlFor="edit-description" className="block text-sm font-medium text-gray-300">Description</label>
             <textarea
-              id="edit-content"
-              rows={4}
+              id="edit-description"
+              rows={3}
               className="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-white"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              required
+              value={description || ""}
+              onChange={(e) => setDescription(e.target.value)}
             ></textarea>
           </div>
           <div>
-            <label htmlFor="edit-date" className="block text-sm font-medium text-gray-300">Date</label>
+            <label htmlFor="edit-dueDate" className="block text-sm font-medium text-gray-300">Due Date</label>
             <input
               type="date"
-              id="edit-date"
+              id="edit-dueDate"
               className="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-white"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
             />
           </div>
           <div>
-            <label htmlFor="edit-category" className="block text-sm font-medium text-gray-300">Category</label>
+            <label htmlFor="edit-priority" className="block text-sm font-medium text-gray-300">Priority</label>
             <select
-              id="edit-category"
+              id="edit-priority"
               className="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-white"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              value={priority}
+              onChange={(e) => setPriority(e.target.value as ITask["priority"])}
             >
-              <option value="None">None</option>
-              <option value="Technical">Technical</option>
-              <option value="Non-Technical">Non-Technical</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
             </select>
-          </div>
-          <div>
-            <label htmlFor="edit-duration" className="block text-sm font-medium text-gray-300">Duration (minutes)</label>
-            <input
-              type="number"
-              id="edit-duration"
-              className="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-white"
-              value={duration || ""}
-              onChange={(e) => setDuration(e.target.value ? parseInt(e.target.value) : undefined)}
-              min="0"
-            />
           </div>
           <div className="flex justify-end space-x-3">
             <button
