@@ -225,9 +225,10 @@ export default function LogsPage() {
 
       {isDeleteModalOpen && logToDelete && (
         <DeleteConfirmationModal
-          logTitle={logToDelete.title}
+          isOpen={isDeleteModalOpen}
+          onClose={handleCancelDelete}
           onConfirm={handleConfirmDelete}
-          onCancel={handleCancelDelete}
+          message={`Are you sure you want to delete the log entry: "${logToDelete.title}"?`}
         />
       )}
     </div>

@@ -11,6 +11,7 @@ export default function LogEntryForm() {
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("None");
   const [duration, setDuration] = useState<number | undefined>(undefined);
+  const [timestamp, setTimestamp] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -45,6 +46,7 @@ export default function LogEntryForm() {
           content,
           category: category === "None" ? undefined : category,
           duration,
+          timestamp: new Date(timestamp),
         }),
       });
 
@@ -58,6 +60,7 @@ export default function LogEntryForm() {
       setContent("");
       setCategory("None");
       setDuration(undefined);
+      setTimestamp(new Date().toISOString().split('T')[0]);
 
       // Animate the form on success
       gsap.to(formRef.current, {
@@ -139,6 +142,20 @@ export default function LogEntryForm() {
           onChange={(e) => setDuration(e.target.value ? parseInt(e.target.value) : undefined)}
           min="0"
           placeholder="Enter duration in minutes"
+        />
+      </div>
+
+      <div className="mb-6">
+        <label htmlFor="timestamp" className="sr-only">
+          Date:
+        </label>
+        <input
+          type="date"
+          id="timestamp"
+          className="appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm bg-gray-700"
+          value={timestamp}
+          onChange={(e) => setTimestamp(e.target.value)}
+          required
         />
       </div>
 

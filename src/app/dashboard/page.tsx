@@ -1,9 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react"; // Use useSession for client-side session
 import { Session } from "next-auth"; // Import Session type
 import Link from "next/link";
+import DashboardCalendar from "@/components/DashboardCalendar";
+import DashboardTaskList from "@/components/DashboardTaskList";
+import { ITask } from "@/models/Task";
+import { gsap } from "gsap";
+import { useGSAP } from "@gsap/react";
 
 // We will fetch logs and stats on the client side now,
 // as this component is marked "use client".
@@ -19,6 +24,11 @@ export default function DashboardPage() {
   const [loadingLogs, setLoadingLogs] = useState(true);
   const [logsError, setLogsError] = useState<string | null>(null);
 
+  const [tasks, setTasks] = useState<ITask[]>([]);
+  const [loadingTasks, setLoadingTasks] = useState(true);
+  const [tasksError, setTasksError] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [report, setReport] = useState<string | null>(null);
@@ -26,9 +36,16 @@ export default function DashboardPage() {
   const [reportError, setReportError] = useState<string | null>(null);
   const [reportTitle, setReportTitle] = useState("");
 
+  const dashboardRef = useRef(null);
+
+  useGSAP(() => {
+    gsap.from(dashboardRef.current, { opacity: 0, y: 50, duration: 0.8, ease: "power3.out" });
+  }, { scope: dashboardRef });
+
   useEffect(() => {
     if (session?.user?.id) {
       fetchLogsAndStats();
+      fetchTasks();
     }
   }, [session]);
 
@@ -49,6 +66,24 @@ export default function DashboardPage() {
       setLogsError(err.message);
     } finally {
       setLoadingLogs(false);
+    }
+  };
+
+  const fetchTasks = async () => {
+    if (!session?.user?.id) return;
+    setLoadingTasks(true);
+    setTasksError(null);
+    try {
+      const response = await fetch('/api/tasks');
+      if (!response.ok) {
+        throw new Error('Failed to fetch tasks');
+      }
+      const data: ITask[] = await response.json();
+      setTasks(data);
+    } catch (err: any) {
+      setTasksError(err.message);
+    } finally {
+      setLoadingTasks(false);
     }
   };
 
@@ -103,7 +138,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 text-white">
+    <div ref={dashboardRef} className="container mx-auto p-4 text-white">
       <h1 className="text-3xl font-bold mb-6">Welcome to your Dashboard, {session.user?.name}!</h1>
 
       {loadingLogs ? (
@@ -126,6 +161,15 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div>
+          <DashboardCalendar tasks={tasks} onDayClick={setSelectedDate} selectedDate={selectedDate} />
+        </div>
+        <div>
+          <DashboardTaskList tasks={tasks} selectedDate={selectedDate} />
+        </div>
+      </div>
 
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Recent Logs</h2>
