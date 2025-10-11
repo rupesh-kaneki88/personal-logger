@@ -8,6 +8,7 @@ import { useGSAP } from "@gsap/react";
 import EditLogModal from "@/components/EditLogModal"; // Import the new modal component
 import DeleteConfirmationModal from "@/components/DeleteConfirmationModal"; // Import the new delete modal
 import { toast } from "sonner";
+import LoadingPage from "@/components/LoadingPage";
 
 export default function LogsPage() {
   const { data: session, status } = useSession();
@@ -145,12 +146,8 @@ export default function LogsPage() {
     }
   };
 
-  if (status === "loading") {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-24 text-white">
-        <h1 className="text-4xl font-bold">Loading...</h1>
-      </div>
-    );
+  if (status === "loading" || loading) {
+    return <LoadingPage />;
   }
 
   if (error) {
@@ -173,9 +170,7 @@ export default function LogsPage() {
     <div className="container mx-auto p-4 text-white">
       <h1 className="text-3xl font-bold mb-6">All Your Logs</h1>
 
-      {loading ? (
-        <p>Loading all logs...</p>
-      ) : logs.length === 0 ? (
+      {logs.length === 0 ? (
         <p>No logs yet. Start logging your work!</p>
       ) : (
         <div className="space-y-4">

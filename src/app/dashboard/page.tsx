@@ -9,6 +9,7 @@ import DashboardTaskList from "@/components/DashboardTaskList";
 import { ITask } from "@/models/Task";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
+import LoadingPage from "@/components/LoadingPage";
 
 // We will fetch logs and stats on the client side now,
 // as this component is marked "use client".
@@ -121,12 +122,8 @@ export default function DashboardPage() {
     }
   };
 
-  if (status === "loading") {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-24 text-white">
-        <h1 className="text-4xl font-bold">Loading...</h1>
-      </div>
-    );
+  if (status === "loading" || loadingLogs || loadingTasks) {
+    return <LoadingPage />;
   }
 
   if (!session) {
@@ -141,9 +138,7 @@ export default function DashboardPage() {
     <div ref={dashboardRef} className="container mx-auto p-4 text-white">
       <h1 className="text-3xl font-bold mb-6">Welcome to your Dashboard, {session.user?.name}!</h1>
 
-      {loadingLogs ? (
-        <p>Loading logs and statistics...</p>
-      ) : logsError ? (
+      {logsError ? (
         <p className="text-red-500">Error: {logsError}</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -177,9 +172,7 @@ export default function DashboardPage() {
           View All
         </Link>
       </div>
-      {loadingLogs ? (
-        <p>Loading recent logs...</p>
-      ) : logs.length === 0 ? (
+      {logs.length === 0 ? (
         <p>No logs yet. Start logging your work!</p>
       ) : (
         <div className="relative h-48 mb-8"> {/* Adjust height as needed */}

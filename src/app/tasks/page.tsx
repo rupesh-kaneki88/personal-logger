@@ -10,9 +10,10 @@ import { ITask } from '@/models/Task';
 import { toast } from 'sonner';
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
+import LoadingPage from '@/components/LoadingPage';
 
 export default function TasksPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [tasks, setTasks] = useState<ITask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -163,7 +164,9 @@ export default function TasksPage() {
     setTaskToEdit(null);
   };
 
-  if (loading) return <div className="text-center text-white">Loading tasks...</div>;
+  if (status === 'loading' || loading) {
+    return <LoadingPage />;
+  }
   if (error) return <div className="text-center text-red-400">Error: {error}</div>;
 
   return (

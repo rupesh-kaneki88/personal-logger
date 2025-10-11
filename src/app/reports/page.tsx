@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { gsap } from 'gsap';
+import LoadingPage from '@/components/LoadingPage';
 
 export default function ReportsPage() {
   const { data: session, status } = useSession();
@@ -56,12 +57,8 @@ export default function ReportsPage() {
     });
   }, [openReportId, reports]);
 
-  if (status === 'loading') {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-24 text-white">
-        <h1 className="text-4xl font-bold">Loading...</h1>
-      </div>
-    );
+  if (status === 'loading' || loading) {
+    return <LoadingPage />;
   }
 
   if (!session) {
@@ -75,9 +72,7 @@ export default function ReportsPage() {
   return (
     <div className="container mx-auto p-4 text-white">
       <h1 className="text-3xl font-bold mb-6">Generated Reports</h1>
-      {loading ? (
-        <p>Loading reports...</p>
-      ) : error ? (
+      {error ? (
         <p className="text-red-500">Error: {error}</p>
       ) : reports.length === 0 ? (
         <p>No reports generated yet.</p>
