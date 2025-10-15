@@ -80,7 +80,15 @@ export default function EditLogModal({ log, onClose, onSave }: EditLogModalProps
         content,
         category: category === "None" ? undefined : category,
         duration,
-        timestamp: date ? new Date(date) : undefined,
+        timestamp: date
+          ? new Date(
+              new Date(date).setHours(
+                new Date(log.timestamp).getHours(),
+                new Date(log.timestamp).getMinutes(),
+                new Date(log.timestamp).getSeconds()
+              )
+            )
+          : undefined,
       };
       await onSave(updatedLog); // Await onSave as it will now handle the API call
       toast.success("Log updated successfully!", { id: loadingToast });

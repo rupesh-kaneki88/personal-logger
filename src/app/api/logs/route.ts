@@ -59,7 +59,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { title, content, category, duration } = body;
+    const { title, content, category, duration, timestamp } = body;
 
     if (!title) {
       return new NextResponse(JSON.stringify({ message: "Title is required" }), {
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
       content,
       category,
       duration,
-      timestamp: new Date(),
+      timestamp: timestamp || new Date(),
     });
 
     return new NextResponse(JSON.stringify(newLog), {

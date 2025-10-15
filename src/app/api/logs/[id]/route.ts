@@ -20,7 +20,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
   try {
     const logId = id;
     const body = await req.json();
-    const { title, content, category, duration } = body;
+    const { title, content, category, duration, timestamp } = body;
 
     if (!title || !content) {
       return new NextResponse(JSON.stringify({ message: "Title and Content are required" }), {
@@ -31,7 +31,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
 
     const updatedLog = await Log.findOneAndUpdate(
       { _id: logId, userId: session.user.id },
-      { title, content, category, duration },
+      { title, content, category, duration, timestamp },
       { new: true, runValidators: true }
     );
 

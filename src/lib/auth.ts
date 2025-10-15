@@ -50,6 +50,7 @@ export const authOptions: AuthOptions = {
           html: html,
         };
         await sg.send(msg);
+        return Promise.resolve();
       },
     }),
     GoogleProvider({

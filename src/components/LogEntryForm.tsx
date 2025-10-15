@@ -35,20 +35,24 @@ export default function LogEntryForm() {
     }
 
     try {
-      const response = await fetch("/api/logs", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: session.user.id,
-          title,
-          content,
-          category: category === "None" ? undefined : category,
-          duration,
-          timestamp: new Date(timestamp),
-        }),
-      });
+      const now = new Date();
+          const newTimestamp = new Date(timestamp);
+          newTimestamp.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+
+          const response = await fetch("/api/logs", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              userId: session.user.id,
+              title,
+              content,
+              category: category === "None" ? undefined : category,
+              duration,
+              timestamp: newTimestamp,
+            }),
+          });
 
       if (!response.ok) {
         const errorData = await response.json();
