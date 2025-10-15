@@ -1,11 +1,12 @@
-import { NextResponse } from "next/server";
-import { getServerSession, Session } from "next-auth";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import Log from "@/models/Log";
 import dbConnect from "@/lib/dbConnect";
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
-  const session: Session | null = await getServerSession(authOptions);
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
+  const session = await getServerSession(authOptions);
 
   if (!session) {
     return new NextResponse(JSON.stringify({ message: "Unauthorized" }), {
@@ -17,8 +18,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   await dbConnect();
 
   try {
-    const logId = params.id;
-    const body = await request.json();
+    const logId = id;
+    const body = await req.json();
     const { title, content, category, duration } = body;
 
     if (!title || !content) {
@@ -51,5 +52,28 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
+  }
+}
+
+export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
+  await dbConnect();
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user || !session.user.id) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const result = await Log.deleteOne({ _id: id, userId: session.user.id });
+
+    if (result.deletedCount === 0) {
+      return NextResponse.json({ message: 'Log not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: 'Log deleted successfully' }, { status: 200 });
+  } catch (error: any) {
+    console.error('Error deleting log:', error);
+    return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }

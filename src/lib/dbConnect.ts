@@ -28,7 +28,11 @@ async function dbConnect() {
     return cached.mongoose.conn;
   }
 
-  if (!cached.mongoose?.promise) {
+  if (!cached.mongoose) {
+    cached.mongoose = { conn: null, promise: null };
+  }
+
+  if (!cached.mongoose.promise) {
     const opts = {
       bufferCommands: false,
     };

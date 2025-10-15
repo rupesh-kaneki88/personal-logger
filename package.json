@@ -16,6 +16,7 @@
     "@types/mongoose": "^5.11.96",
     "@types/next-auth": "^3.13.0",
     "date-fns": "^4.1.0",
+    "googleapis": "^162.0.0",
     "gsap": "^3.13.0",
     "mongodb": "^6.20.0",
     "mongoose": "^8.18.2",

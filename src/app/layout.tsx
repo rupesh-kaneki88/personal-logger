@@ -4,8 +4,7 @@ import "./globals.css";
 import AuthProviders from "../components/AuthProviders";
 import DynamicBackground from "../components/DynamicBackground"; // Import DynamicBackground
 import { Toaster } from "sonner";
-import { Suspense } from "react";
-import LoadingPage from "../components/LoadingPage";
+import MinimumLoadingWrapper from "../components/MinimumLoadingWrapper";
 
 const roboto = Roboto({
   weight: ["300", "400", "500", "700"],
@@ -28,9 +27,9 @@ export default function RootLayout({
       <body className={`${roboto.variable} font-sans antialiased`}>
         <DynamicBackground /> {/* Render DynamicBackground here */}
         <AuthProviders>
-          <Suspense fallback={<LoadingPage />}>
+          <MinimumLoadingWrapper>
             {children}
-          </Suspense>
+          </MinimumLoadingWrapper>
         </AuthProviders>
         <Toaster richColors />
       </body>

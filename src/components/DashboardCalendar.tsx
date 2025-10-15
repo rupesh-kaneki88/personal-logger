@@ -6,6 +6,8 @@ import { isSameDay } from 'date-fns';
 import { getLocalTimeZone, CalendarDate } from '@internationalized/date';
 import { ITask } from '@/models/Task';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 
 interface DashboardCalendarProps {
   tasks: ITask[];
@@ -13,8 +15,37 @@ interface DashboardCalendarProps {
   selectedDate: Date | undefined;
 }
 
+interface GoogleCalendarEvent {
+  id: string;
+  summary: string;
+  start: { dateTime: string; date: string };
+  end: { dateTime: string; date: string };
+}
+
 export default function DashboardCalendar({ tasks, onDayClick, selectedDate }: DashboardCalendarProps) {
   const { locale } = useLocale();
+  const { data: session } = useSession();
+  const [googleEvents, setGoogleEvents] = useState<GoogleCalendarEvent[]>([]);
+
+  useEffect(() => {
+    const fetchGoogleEvents = async () => {
+      if (session?.accessToken) {
+        try {
+          const res = await fetch('/api/google-calendar/events');
+          if (res.ok) {
+            const data = await res.json();
+            setGoogleEvents(data);
+          } else {
+            console.error('Failed to fetch Google Calendar events');
+          }
+        } catch (error) {
+          console.error('Error fetching Google Calendar events:', error);
+        }
+      }
+    };
+
+    fetchGoogleEvents();
+  }, [session?.accessToken, selectedDate]); // Refetch when session or selectedDate changes
 
   const getTaskColorClass = (priority: ITask['priority']) => {
     switch (priority) {
@@ -57,6 +88,10 @@ export default function DashboardCalendar({ tasks, onDayClick, selectedDate }: D
               const dayTasks = tasks.filter(
                 (task) => task.dueDate && isSameDay(new Date(task.dueDate), date.toDate(getLocalTimeZone())) && !task.isCompleted
               );
+              const dayGoogleEvents = googleEvents.filter(
+                (event) =>
+                  (event.start.date && isSameDay(new Date(event.start.date), date.toDate(getLocalTimeZone())))
+              );
               return (
                 <CalendarCell
                   date={date}
@@ -69,6 +104,13 @@ export default function DashboardCalendar({ tasks, onDayClick, selectedDate }: D
                         key={`${task?._id?.toString() || index}`}
                         className={`w-2 h-2 rounded-full mx-0.5 ${getTaskColorClass(task.priority)}`}
                         title={task.title}
+                      />
+                    ))}
+                    {dayGoogleEvents.map((event, index) => (
+                      <div
+                        key={event.id || `google-event-${index}`}
+                        className="w-2 h-2 rounded-full mx-0.5 bg-blue-400"
+                        title={event.summary}
                       />
                     ))}
                   </div>

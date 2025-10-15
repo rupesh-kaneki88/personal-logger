@@ -140,7 +140,7 @@ export default function LogsPage() {
           duration: 0.7, // Increased duration for a more noticeable elastic effect
           ease: "elastic.out(1, 0.75)", // Changed to elastic.out for closing
           overflow: "hidden",
-          onComplete: () => (contentRef.style.display = "none"), // Hide after collapse
+          onComplete: () => {contentRef.style.display = "none"}, // Hide after collapse
         });
       }
     }
@@ -209,7 +209,7 @@ export default function LogsPage() {
               {/* Always render the div, but control its visibility and height with GSAP */}
               <div
                 id={`log-content-${log._id.toString()}`}
-                ref={(el) => (logContentRefs.current[log._id.toString()] = el)}
+                ref={(el) => {logContentRefs.current[log._id.toString()] = el}}
                 className="mt-4 border-t border-gray-700 pt-4"
                 style={{ display: expandedLogId === log._id.toString() ? "block" : "none", height: expandedLogId === log._id.toString() ? "auto" : 0 }}
               >

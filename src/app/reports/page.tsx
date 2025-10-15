@@ -87,7 +87,7 @@ export default function ReportsPage() {
                 </p>
               </div>
               <div
-                ref={el => (reportRefs.current[report._id] = el)}
+                ref={el => {reportRefs.current[report._id] = el}}
                 className="h-0 opacity-0 overflow-hidden"
               >
                 <div className="p-4">

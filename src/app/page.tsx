@@ -12,6 +12,7 @@ import { useRef, useEffect, useState } from "react";
 import { signIn, useSession } from "next-auth/react"; // Import signIn and useSession for client-side
 
 import NameForm from "../components/NameForm";
+import LoadingPage from "@/components/LoadingPage";
 
 export default function Home() {
   const { data: session, status } = useSession(); // Use useSession for client-side session
@@ -28,11 +29,7 @@ export default function Home() {
   }, { scope: containerRef });
 
   if (status === "loading") {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-24 text-white">
-        <h1 className="text-4xl font-bold">Loading...</h1>
-      </div>
-    );
+    return <LoadingPage />;
   }
 
   if (!session) {
