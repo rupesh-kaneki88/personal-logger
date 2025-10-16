@@ -1,10 +1,6 @@
 "use client"; // Add this line for client-side interactivity and GSAP
 
 import Image from "next/image";
-// getServerSession is not directly used in this client component,
-// but kept for context if needed for server-side data fetching in future.
-// import { getServerSession } from "next-auth";
-// import { authOptions } from "./api/auth/[...nextauth]/route";
 import LogEntryForm from "../components/LogEntryForm";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";

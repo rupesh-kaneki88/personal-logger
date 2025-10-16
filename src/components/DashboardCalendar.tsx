@@ -7,7 +7,7 @@ import { getLocalTimeZone, CalendarDate } from '@internationalized/date';
 import { ITask } from '@/models/Task';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signIn } from 'next-auth/react';
 
 interface DashboardCalendarProps {
   tasks: ITask[];
@@ -26,6 +26,7 @@ export default function DashboardCalendar({ tasks, onDayClick, selectedDate }: D
   const { locale } = useLocale();
   const { data: session } = useSession();
   const [googleEvents, setGoogleEvents] = useState<GoogleCalendarEvent[]>([]);
+  const [calendarAccessDenied, setCalendarAccessDenied] = useState(false);
 
   useEffect(() => {
     const fetchGoogleEvents = async () => {
@@ -35,17 +36,27 @@ export default function DashboardCalendar({ tasks, onDayClick, selectedDate }: D
           if (res.ok) {
             const data = await res.json();
             setGoogleEvents(data);
+            setCalendarAccessDenied(false); // Reset if access is now granted
+          } else if (res.status === 403) {
+            setCalendarAccessDenied(true);
+            setGoogleEvents([]); // Clear events if access is denied
           } else {
             console.error('Failed to fetch Google Calendar events');
+            setCalendarAccessDenied(false);
           }
         } catch (error) {
           console.error('Error fetching Google Calendar events:', error);
+          setCalendarAccessDenied(false);
         }
       }
     };
 
     fetchGoogleEvents();
   }, [session?.accessToken, selectedDate]); // Refetch when session or selectedDate changes
+
+  const handleConnectGoogleCalendar = () => {
+    signIn('google', { callbackUrl: window.location.href, prompt: 'consent', scope: 'https://www.googleapis.com/auth/calendar.events.readonly' });
+  };
 
   const getTaskColorClass = (priority: ITask['priority']) => {
     switch (priority) {
@@ -120,6 +131,17 @@ export default function DashboardCalendar({ tasks, onDayClick, selectedDate }: D
           </CalendarGridBody>
         </CalendarGrid>
       </Calendar>
+      {calendarAccessDenied && (
+        <div className="text-center py-4 mt-4 bg-gray-800 rounded-lg shadow-xl border border-gray-700">
+          <p className="text-gray-300 mb-2">Connect your Google Calendar to see your events alongside your tasks!</p>
+          <button
+            onClick={handleConnectGoogleCalendar}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+          >
+            Click here to connect
+          </button>
+        </div>
+      )}
     </I18nProvider>
   );
 }

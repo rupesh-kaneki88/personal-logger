@@ -34,8 +34,11 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(response.data.items);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching Google Calendar events:', error);
+    if (error.code === 403) {
+      return NextResponse.json({ message: 'Insufficient Google Calendar permissions' }, { status: 403 });
+    }
     return NextResponse.json({ message: 'Error fetching events' }, { status: 500 });
   }
 }

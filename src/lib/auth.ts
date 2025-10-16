@@ -3,9 +3,19 @@ import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import clientPromise from "@/lib/mongodb";
 import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
-import sg from "@sendgrid/mail"; // Import SendGrid
+import nodemailer from 'nodemailer';
+import User from '@/models/User'; // Import the User model
 
-sg.setApiKey(process.env.SENDGRID_API_KEY as string); // Set SendGrid API Key
+// Create a Nodemailer transporter
+const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_SERVER_HOST,
+  port: parseInt(process.env.EMAIL_SERVER_PORT || "587"),
+  secure: process.env.EMAIL_SERVER_PORT === "465", 
+  auth: {
+    user: process.env.EMAIL_SERVER_USER,
+    pass: process.env.EMAIL_SERVER_PASSWORD,
+  },
+});
 
 export const authOptions: AuthOptions = {
   pages: {
@@ -42,15 +52,19 @@ export const authOptions: AuthOptions = {
         </body>
         `;
 
-        const msg = {
-          to: email,
-          from: provider.from as string,
-          subject: `Sign in to ${host}`,
-          text: `Please use the following link to sign in to ${host}: ${url}`,
-          html: html,
-        };
-        await sg.send(msg);
-        return Promise.resolve();
+        try {
+          await transporter.sendMail({
+            to: email,
+            from: provider.from as string,
+            subject: `Sign in to ${host}`,
+            text: `Please use the following link to sign in to ${host}: ${url}`,
+            html: html,
+          });
+          return Promise.resolve();
+        } catch (error) {
+          console.error("Error sending verification email:", error);
+          return Promise.reject(new Error("Failed to send verification email"));
+        }
       },
     }),
     GoogleProvider({
@@ -66,6 +80,42 @@ export const authOptions: AuthOptions = {
   ],
   adapter: MongoDBAdapter(clientPromise),
   callbacks: {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "google" && profile?.email) {
+        const existingUser = await User.findOne({ email: profile.email });
+
+        if (existingUser) {
+          // Check if the existing user already has a Google account linked
+          const existingGoogleAccount = await (await clientPromise).db().collection("accounts").findOne({
+            userId: existingUser._id,
+            provider: "google",
+          });
+
+          if (!existingGoogleAccount) {
+            // Link the Google account to the existing user
+            await (await clientPromise).db().collection("accounts").insertOne({
+              userId: existingUser._id,
+              provider: account.provider,
+              type: account.type,
+              providerAccountId: account.providerAccountId,
+              access_token: account.access_token,
+              expires_at: account.expires_at,
+              id_token: account.id_token,
+              refresh_token: account.refresh_token,
+              scope: account.scope,
+              token_type: account.token_type,
+            });
+
+            // Update user's emailVerified if Google email is verified
+            if (profile.email_verified && !existingUser.emailVerified) {
+              await User.updateOne({ _id: existingUser._id }, { emailVerified: new Date() });
+            }
+          }
+          return true; // Allow sign-in
+        }
+      }
+      return true; // Allow sign-in for other cases (new user, other providers)
+    },
     async jwt({ token, user, account, trigger, session }) {
       // If the user is signing in, add their ID and name to the token
       if (user) {
