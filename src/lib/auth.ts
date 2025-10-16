@@ -107,7 +107,7 @@ export const authOptions: AuthOptions = {
             });
 
             // Update user's emailVerified if Google email is verified
-            if (profile.email_verified && !existingUser.emailVerified) {
+            if ((profile as any).email_verified && !existingUser.emailVerified) {
               await User.updateOne({ _id: existingUser._id }, { emailVerified: new Date() });
             }
           }
