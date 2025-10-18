@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import TaskEntryForm from '@/components/TaskEntryForm';
 import TaskList from '@/components/TaskList';
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';
+import CompleteTaskModal from '@/components/CompleteTaskModal';
 import EditTaskModal from '@/components/EditTaskModal';
 import { ITask } from '@/models/Task';
 import { toast } from 'sonner';
@@ -102,22 +103,21 @@ export default function TasksPage() {
     setShowCompleteModal(true);
   };
 
-  const handleConfirmComplete = async () => {
-    if (!taskToComplete) return;
+  const handleConfirmComplete = async (task: ITask, duration?: number, category?: string) => {
+    if (!task) return;
     try {
-      const response = await fetch(`/api/tasks/${taskToComplete._id}`, {
-        method: 'PUT',
+      const response = await fetch(`/api/tasks/${task._id}/log`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ isCompleted: true }),
+        body: JSON.stringify({ duration, category }),
       });
       if (!response.ok) {
-        throw new Error('Failed to complete task');
+        throw new Error('Failed to complete and log task');
       }
-      const updatedTask: ITask = await response.json();
-      handleTaskUpdated(updatedTask);
-      toast.success('Task marked as complete!');
+      setTasks((prevTasks) => prevTasks.filter((t) => t._id !== task._id));
+      toast.success('Task completed and logged successfully!');
     } catch (err: any) {
       setError(err.message);
       toast.error(err.message);
@@ -197,11 +197,10 @@ export default function TasksPage() {
       )}
 
       {showCompleteModal && taskToComplete && (
-        <DeleteConfirmationModal
-          isOpen={showCompleteModal}
+        <CompleteTaskModal
+          task={taskToComplete}
           onClose={handleCancelComplete}
           onConfirm={handleConfirmComplete}
-          message={`Are you sure you want to mark the task as complete: "${taskToComplete.title}"?`}
         />
       )}
 

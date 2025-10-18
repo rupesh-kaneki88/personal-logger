@@ -150,7 +150,7 @@ export default function DashboardCalendar({ tasks, onDayClick, selectedDate, sho
           </CalendarGridBody>
         </CalendarGrid>
       </Calendar>
-      <div className="flex justify-center py-4 mt-4 bg-gray-800 rounded-lg shadow-xl border border-gray-700">
+      <div className="flex justify-center p-4 mt-4 bg-gray-800 rounded-lg shadow-xl border border-gray-700">
         {!isGoogleConnected ? (
           <>
             <p className="text-gray-300 mb-2">Connect your Google Calendar to see your events alongside your tasks!</p>
