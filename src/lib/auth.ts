@@ -81,46 +81,56 @@ export const authOptions: AuthOptions = {
   adapter: MongoDBAdapter(clientPromise),
   callbacks: {
     async signIn({ user, account, profile }) {
-      if (account?.provider === "google" && profile?.email) {
+      // This callback is triggered when a user signs in.
+      if (account && profile?.email) {
+        // Find if a user with this email already exists.
         const existingUser = await User.findOne({ email: profile.email });
 
         if (existingUser) {
-          // Check if the existing user already has a Google account linked
-          const existingGoogleAccount = await (await clientPromise).db().collection("accounts").findOne({
+          // If a user exists, check if the sign-in provider is already linked.
+          const accountExists = await (await clientPromise).db().collection("accounts").findOne({
+            provider: account.provider,
             userId: existingUser._id,
-            provider: "google",
           });
 
-          if (!existingGoogleAccount) {
-            // Link the Google account to the existing user
-            await (await clientPromise).db().collection("accounts").insertOne({
-              userId: existingUser._id,
-              provider: account.provider,
-              type: account.type,
-              providerAccountId: account.providerAccountId,
-              access_token: account.access_token,
-              expires_at: account.expires_at,
-              id_token: account.id_token,
-              refresh_token: account.refresh_token,
-              scope: account.scope,
-              token_type: account.token_type,
-            });
-
-            // Update user's emailVerified if Google email is verified
-            if ((profile as any).email_verified && !existingUser.emailVerified) {
-              await User.updateOne({ _id: existingUser._id }, { emailVerified: new Date() });
-            }
+          if (accountExists) {
+            // If the account is already linked, allow the sign-in.
+            return true;
           }
-          return true; // Allow sign-in
+
+          // If the account is not linked, link the new account to the existing user.
+          await (await clientPromise).db().collection("accounts").insertOne({
+            userId: existingUser._id,
+            provider: account.provider,
+            type: account.type,
+            providerAccountId: account.providerAccountId,
+            access_token: account.access_token,
+            expires_at: account.expires_at,
+            id_token: account.id_token,
+            refresh_token: account.refresh_token,
+            scope: account.scope,
+            token_type: account.token_type,
+          });
+
+          // If the provider is Google and the email is verified, update the user's emailVerified status.
+          if (account.provider === 'google' && (profile as any).email_verified && !existingUser.emailVerified) {
+            await User.updateOne({ _id: existingUser._id }, { $set: { emailVerified: new Date() } });
+          }
+
+          // Allow the sign-in to proceed with the existing user.
+          return true;
         }
       }
-      return true; // Allow sign-in for other cases (new user, other providers)
+      // If no existing user is found, or for other providers, allow the default sign-in behavior.
+      return true;
     },
     async jwt({ token, user, account, trigger, session }) {
       // If the user is signing in, add their ID and name to the token
       if (user) {
+        const dbUser = await User.findById(user.id);
         token.id = user.id;
         token.name = user.name;
+        token.lastReportGeneratedAt = dbUser?.lastReportGeneratedAt;
       }
       // If a new account is linked or signed in, store the access token
       if (account) {
@@ -144,6 +154,7 @@ export const authOptions: AuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.name = token.name as string;
+        session.user.lastReportGeneratedAt = token.lastReportGeneratedAt as Date;
       }
       // Add the access token to the session
       if (token.accessToken) {

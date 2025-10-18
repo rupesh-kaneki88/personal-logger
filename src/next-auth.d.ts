@@ -9,6 +9,7 @@ declare module "next-auth" {
     accessToken?: string; // Add accessToken to Session
     user: {
       id: string; // Add the 'id' property here
+      lastReportGeneratedAt?: Date;
     } & DefaultSession["user"];
   }
 
@@ -18,6 +19,7 @@ declare module "next-auth" {
    */
   interface User extends DefaultUser {
     id: string; // Add the 'id' property here
+    lastReportGeneratedAt?: Date;
   }
 }
 

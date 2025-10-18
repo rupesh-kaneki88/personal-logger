@@ -5,14 +5,19 @@ import { I18nProvider, useLocale } from 'react-aria';
 import { isSameDay } from 'date-fns';
 import { getLocalTimeZone, CalendarDate } from '@internationalized/date';
 import { ITask } from '@/models/Task';
+import { UpcomingItem } from '@/components/DashboardTaskList';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { useState, useEffect } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 
+import SlidingToggleButton from './SlidingToggleButton';
+
 interface DashboardCalendarProps {
-  tasks: ITask[];
+  tasks: UpcomingItem[];
   onDayClick: (date: Date | undefined) => void;
   selectedDate: Date | undefined;
+  showGoogleEvents: boolean;
+  setShowGoogleEvents: (show: boolean) => void;
 }
 
 interface GoogleCalendarEvent {
@@ -22,11 +27,11 @@ interface GoogleCalendarEvent {
   end: { dateTime: string; date: string };
 }
 
-export default function DashboardCalendar({ tasks, onDayClick, selectedDate }: DashboardCalendarProps) {
+export default function DashboardCalendar({ tasks, onDayClick, selectedDate, showGoogleEvents, setShowGoogleEvents }: DashboardCalendarProps) {
   const { locale } = useLocale();
   const { data: session } = useSession();
   const [googleEvents, setGoogleEvents] = useState<GoogleCalendarEvent[]>([]);
-  const [calendarAccessDenied, setCalendarAccessDenied] = useState(false);
+  const [isGoogleConnected, setIsGoogleConnected] = useState(false);
 
   useEffect(() => {
     const fetchGoogleEvents = async () => {
@@ -36,26 +41,31 @@ export default function DashboardCalendar({ tasks, onDayClick, selectedDate }: D
           if (res.ok) {
             const data = await res.json();
             setGoogleEvents(data);
-            setCalendarAccessDenied(false); // Reset if access is now granted
-          } else if (res.status === 403) {
-            setCalendarAccessDenied(true);
-            setGoogleEvents([]); // Clear events if access is denied
+            setIsGoogleConnected(true); // Connection is good
           } else {
-            console.error('Failed to fetch Google Calendar events');
-            setCalendarAccessDenied(false);
+            // Handle cases where token is invalid or permissions are denied
+            setIsGoogleConnected(false);
+            setGoogleEvents([]);
+            if (res.status !== 403) { // Don't log expected permission errors
+              console.error('Failed to fetch Google Calendar events');
+            }
           }
         } catch (error) {
           console.error('Error fetching Google Calendar events:', error);
-          setCalendarAccessDenied(false);
+          setIsGoogleConnected(false);
         }
+      } else {
+        // No access token means not connected
+        setIsGoogleConnected(false);
       }
     };
 
     fetchGoogleEvents();
-  }, [session?.accessToken, selectedDate]); // Refetch when session or selectedDate changes
+  }, [session?.accessToken]); // Refetch only when session changes
 
   const handleConnectGoogleCalendar = () => {
-    signIn('google', { callbackUrl: window.location.href, prompt: 'consent', scope: 'https://www.googleapis.com/auth/calendar.events.readonly' });
+    // Using signIn will link the account if the user is already logged in
+    signIn('google', { callbackUrl: window.location.href });
   };
 
   const getTaskColorClass = (priority: ITask['priority']) => {
@@ -96,13 +106,22 @@ export default function DashboardCalendar({ tasks, onDayClick, selectedDate }: D
           </CalendarGridHeader>
           <CalendarGridBody>
             {(date) => {
-              const dayTasks = tasks.filter(
-                (task) => task.dueDate && isSameDay(new Date(task.dueDate), date.toDate(getLocalTimeZone())) && !task.isCompleted
+              const dayTasks = (tasks || []).filter(
+                (task) => task.source === 'internal' && isSameDay(new Date(task.date), date.toDate(getLocalTimeZone())) && !task.isCompleted
               );
-              const dayGoogleEvents = googleEvents.filter(
-                (event) =>
-                  (event.start.date && isSameDay(new Date(event.start.date), date.toDate(getLocalTimeZone())))
-              );
+              const dayGoogleEvents = showGoogleEvents
+                ? googleEvents.filter((event) => {
+                    if (!event.start) return false;
+
+                    if (event.start.dateTime) {
+                      return isSameDay(new Date(event.start.dateTime), date.toDate(getLocalTimeZone()));
+                    } else if (event.start.date) {
+                      const [year, month, day] = event.start.date.split('-').map(Number);
+                      return date.year === year && date.month === month && date.day === day;
+                    }
+                    return false;
+                  })
+                : [];
               return (
                 <CalendarCell
                   date={date}
@@ -112,11 +131,11 @@ export default function DashboardCalendar({ tasks, onDayClick, selectedDate }: D
                   <div className="flex flex-wrap justify-center mt-1">
                     {dayTasks.map((task, index) => (
                       <div
-                        key={`${task?._id?.toString() || index}`}
+                        key={task.id || index}
                         className={`w-2 h-2 rounded-full mx-0.5 ${getTaskColorClass(task.priority)}`}
                         title={task.title}
                       />
-                    ))}
+                    ))} 
                     {dayGoogleEvents.map((event, index) => (
                       <div
                         key={event.id || `google-event-${index}`}
@@ -131,17 +150,25 @@ export default function DashboardCalendar({ tasks, onDayClick, selectedDate }: D
           </CalendarGridBody>
         </CalendarGrid>
       </Calendar>
-      {calendarAccessDenied && (
-        <div className="text-center py-4 mt-4 bg-gray-800 rounded-lg shadow-xl border border-gray-700">
-          <p className="text-gray-300 mb-2">Connect your Google Calendar to see your events alongside your tasks!</p>
-          <button
-            onClick={handleConnectGoogleCalendar}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
-          >
-            Click here to connect
-          </button>
-        </div>
-      )}
+      <div className="flex justify-center py-4 mt-4 bg-gray-800 rounded-lg shadow-xl border border-gray-700">
+        {!isGoogleConnected ? (
+          <>
+            <p className="text-gray-300 mb-2">Connect your Google Calendar to see your events alongside your tasks!</p>
+            <button
+              onClick={handleConnectGoogleCalendar}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+            >
+              Click here to connect
+            </button>
+          </>
+        ) : (
+          <SlidingToggleButton
+            isToggled={showGoogleEvents}
+            onToggle={() => setShowGoogleEvents(!showGoogleEvents)}
+            label="Show Google Events"
+          />
+        )}
+      </div>
     </I18nProvider>
   );
 }
