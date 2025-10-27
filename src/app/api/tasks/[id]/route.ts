@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/dbConnect';
 import Task from '@/models/Task';
 import Log from '@/models/Log';
+import { encrypt, decrypt } from '@/lib/encryption';
 
 export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
@@ -15,7 +16,8 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
   }
 
   try {
-    const { title, description, dueDate, priority, isCompleted } = await req.json();
+    const body = await req.json();
+    const { title: newTitle, description: newDescription, dueDate, priority, isCompleted } = body;
 
     const task = await Task.findOne({ _id: id, userId: session.user.id });
 
@@ -23,8 +25,19 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
       return NextResponse.json({ message: 'Task not found' }, { status: 404 });
     }
 
-    task.title = title || task.title;
-    task.description = description || task.description;
+    // Decrypt current values for internal use
+    const currentTitle = decrypt(task.title);
+    const currentDescription = task.description ? decrypt(task.description) : '';
+
+    // Determine final plaintext values
+    const finalTitle = newTitle || currentTitle;
+    const finalDescription = newDescription || currentDescription;
+
+    // Assign encrypted values back to the task
+    task.title = encrypt(finalTitle);
+    if (finalDescription) {
+        task.description = encrypt(finalDescription);
+    }
     task.dueDate = dueDate ? new Date(dueDate) : task.dueDate;
     task.priority = priority || task.priority;
 
@@ -32,11 +45,14 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
       task.isCompleted = isCompleted;
       if (isCompleted) {
         task.completedAt = new Date();
-        // Create a log entry when a task is marked as complete
+        // Create a log entry with encrypted data
+        const logTitle = `Completed Task: ${finalTitle}`;
+        const logContent = finalDescription || `Task: ${finalTitle} marked as complete.`;
+        
         const newLog = new Log({
           userId: session.user.id,
-          title: `Completed Task: ${task.title}`,
-          content: task.description || `Task: ${task.title} marked as complete.`,
+          title: encrypt(logTitle),
+          content: encrypt(logContent),
           category: 'Task Completion',
           timestamp: task.completedAt,
         });
@@ -47,7 +63,15 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
     }
 
     await task.save();
-    return NextResponse.json(task, { status: 200 });
+
+    // Decrypt the final object for the response
+    const decryptedTask = {
+        ...task.toObject(),
+        title: finalTitle,
+        description: finalDescription,
+    };
+
+    return NextResponse.json(decryptedTask, { status: 200 });
   } catch (error: any) {
     console.error('Error updating task:', error);
     return NextResponse.json({ message: error.message }, { status: 500 });

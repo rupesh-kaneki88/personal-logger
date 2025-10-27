@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Log from "@/models/Log";
 import dbConnect from "@/lib/dbConnect";
+import { encrypt, decrypt } from "@/lib/encryption";
 
 export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
@@ -31,7 +32,13 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
 
     const updatedLog = await Log.findOneAndUpdate(
       { _id: logId, userId: session.user.id },
-      { title, content, category, duration, timestamp },
+      { 
+        title: encrypt(title), 
+        content: encrypt(content), 
+        category, 
+        duration, 
+        timestamp 
+      },
       { new: true, runValidators: true }
     );
 
@@ -42,7 +49,13 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
       });
     }
 
-    return new NextResponse(JSON.stringify(updatedLog), {
+    const decryptedLog = {
+        ...updatedLog.toObject(),
+        title: decrypt(updatedLog.title),
+        content: decrypt(updatedLog.content),
+    };
+
+    return new NextResponse(JSON.stringify(decryptedLog), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

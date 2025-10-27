@@ -3,6 +3,7 @@ import { getServerSession, Session } from "next-auth"; // Import Session
 import { authOptions } from "@/lib/auth";
 import Log from "@/models/Log";
 import dbConnect from "@/lib/dbConnect";
+import { encrypt, decrypt } from "@/lib/encryption";
 
 export async function GET(request: Request) {
   const session: Session | null = await getServerSession(authOptions);
@@ -23,16 +24,22 @@ export async function GET(request: Request) {
 
     let logs;
     if (fetchAll) {
-      logs = await Log.find({ userId }).sort({ timestamp: -1 });
+      logs = await Log.find({ userId }).sort({ timestamp: -1 }).lean();
     } else {
-      logs = await Log.find({ userId }).sort({ timestamp: -1 }).limit(10);
+      logs = await Log.find({ userId }).sort({ timestamp: -1 }).limit(10).lean();
     }
+
+    const decryptedLogs = logs.map(log => ({
+      ...log,
+      title: decrypt(log.title),
+      content: decrypt(log.content),
+    }));
 
     const totalLogs = await Log.countDocuments({ userId });
     const technicalLogs = await Log.countDocuments({ userId, category: "Technical" });
     const nonTechnicalLogs = await Log.countDocuments({ userId, category: "Non-Technical" });
 
-    return new NextResponse(JSON.stringify({ logs, totalLogs, technicalLogs, nonTechnicalLogs }), {
+    return new NextResponse(JSON.stringify({ logs: decryptedLogs, totalLogs, technicalLogs, nonTechnicalLogs }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
@@ -77,14 +84,20 @@ export async function POST(request: Request) {
 
     const newLog = await Log.create({
       userId: session.user.id,
-      title,
-      content,
+      title: encrypt(title),
+      content: encrypt(content),
       category,
       duration,
       timestamp: timestamp || new Date(),
     });
 
-    return new NextResponse(JSON.stringify(newLog), {
+    const decryptedNewLog = {
+      ...newLog.toObject(),
+      title: decrypt(newLog.title),
+      content: decrypt(newLog.content),
+    };
+
+    return new NextResponse(JSON.stringify(decryptedNewLog), {
       status: 201,
       headers: { "Content-Type": "application/json" },
     });

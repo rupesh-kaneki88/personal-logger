@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/dbConnect';
 import Task from '@/models/Task';
+import { encrypt, decrypt } from '@/lib/encryption';
 
 export async function POST(req: NextRequest) {
   await dbConnect();
@@ -21,15 +22,22 @@ export async function POST(req: NextRequest) {
 
     const newTask = new Task({
       userId: session.user.id,
-      title,
-      description,
+      title: encrypt(title),
+      description: description ? encrypt(description) : undefined,
       dueDate: dueDate ? new Date(dueDate) : undefined,
       priority,
       isCompleted: false,
     });
 
     await newTask.save();
-    return NextResponse.json(newTask, { status: 201 });
+
+    const decryptedTask = {
+      ...newTask.toObject(),
+      title: decrypt(newTask.title),
+      description: newTask.description ? decrypt(newTask.description) : undefined,
+    };
+
+    return NextResponse.json(decryptedTask, { status: 201 });
   } catch (error: any) {
     console.error('Error creating task:', error);
     return NextResponse.json({ message: error.message }, { status: 500 });
@@ -45,8 +53,15 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const tasks = await Task.find({ userId: session.user.id }).sort({ createdAt: -1 });
-    return NextResponse.json(tasks, { status: 200 });
+    const tasks = await Task.find({ userId: session.user.id }).sort({ createdAt: -1 }).lean();
+
+    const decryptedTasks = tasks.map(task => ({
+      ...task,
+      title: decrypt(task.title),
+      description: task.description ? decrypt(task.description) : undefined,
+    }));
+
+    return NextResponse.json(decryptedTasks, { status: 200 });
   } catch (error: any) {
     console.error('Error fetching tasks:', error);
     return NextResponse.json({ message: error.message }, { status: 500 });
