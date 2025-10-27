@@ -15,8 +15,8 @@ export default function Header() {
   const pathname = usePathname();
 
   useGSAP(() => {
-    gsap.from(headerRef.current, { opacity: 0, y: -50, duration: 0.8, ease: "power3.out" });
-    gsap.from(".header-item", { opacity: 0, x: -20, duration: 0.6, stagger: 0.2, ease: "power2.out", delay: 0.5 });
+    gsap.from(headerRef.current, { opacity: 0, y: -50, duration: 0.8, ease: "power3.out", delay: 0.2 });
+    gsap.from(".header-item", { opacity: 0, x: -20, duration: 0.6, stagger: 0.2, ease: "power2.out", delay: 0.7 });
   }, { scope: headerRef });
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -72,8 +72,8 @@ export default function Header() {
       {loading && (
         <LoadingPage />
       )}
-      <div className="flex items-center justify-between h-20 max-w-5xl mx-auto px-4">
-        <Link href="/" className="text-xl sm:text-2xl font-bold text-white header-item" onClick={() => setLoading(true)}>
+      <div className="flex items-center justify-between h-20 max-w-5xl lg:max-w-7xl mx-auto px-4">
+        <Link href="/" className="text-xl md:text-3xl font-thin text-white header-item" onClick={() => setLoading(true)}>
           Personal Logger
         </Link>
         <div className="flex items-center sm:hidden"> {/* Mobile menu button for small screens */}
@@ -173,10 +173,10 @@ export default function Header() {
       </div>
       <div
         ref={mobileMenuRef}
-        className="sm:hidden bg-gray-800 border-t border-gray-700 py-2"
+        className="sm:hidden bg-gray-800 border-t border-gray-700 py-0"
         style={{ height: 0, overflow: "hidden" }}
       >
-        <div className="flex flex-col items-center space-y-2">
+        <div className="flex flex-col items-center space-y-2 mb-2">
           <Link
             href="/"
             className="header-item px-4 py-2 rounded-md text-white transition-colors duration-200"

@@ -46,7 +46,7 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4 text-white">
+    <div className="flex h-[70vh] flex-col items-center justify-center p-4 text-white">
       <div ref={formRef} className="w-full max-w-md p-8 space-y-6 bg-gray-800 rounded-lg shadow-xl border border-gray-700">
         <h1 className="text-3xl font-bold text-center text-white">Sign In</h1>
         <p className="text-center text-gray-300">Enter your email to receive a magic link.</p>

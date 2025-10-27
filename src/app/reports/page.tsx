@@ -63,7 +63,7 @@ export default function ReportsPage() {
 
   if (!session) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-24 text-white">
+      <div className="flex h-[70vh] flex-col items-center justify-center p-24 text-white">
         <h1 className="text-4xl font-bold">Please sign in to view your reports</h1>
       </div>
     );

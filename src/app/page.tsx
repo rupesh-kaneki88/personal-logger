@@ -9,6 +9,7 @@ import { signIn, useSession } from "next-auth/react"; // Import signIn and useSe
 
 import NameForm from "../components/NameForm";
 import LoadingPage from "@/components/LoadingPage";
+import AnimatedButton from "../components/AnimatedButton";
 
 export default function Home() {
   const { data: session, status } = useSession(); // Use useSession for client-side session
@@ -34,18 +35,21 @@ export default function Home() {
 
   if (!session) {
     return (
-      <div ref={containerRef} className="flex min-h-screen flex-col items-center justify-center p-24 text-white text-center">
-        <h1 className="text-5xl font-extrabold mb-6 hero-text">Welcome to Personal Logger</h1>
-        <p className="text-xl mb-8 max-w-2xl hero-text">
+      <div ref={containerRef} className="flex h-[70vh] flex-col md:items-center justify-center mt-20 md:mt-0 p-4 md:p-24 text-white text-center">
+        <h1 className="text-5xl md:text-5xl text-left md:text-center font-extrabold mb-8 md:mb-6 hero-text">Welcome to Personal Logger</h1>
+        <p className="text-xl mb-8 max-w-2xl text-left md:text-center hero-text">
           Your personal companion for tracking daily work, projects, and achievements.
           Stay organized, gain insights, and boost your productivity.
         </p>
-        <button
+        <AnimatedButton
           onClick={() => signIn()}
-          className="hero-button bg-blue-600 hover:bg-blue-700 text-white opacity-0 font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+          className="hero-button opacity-0"
         >
           Get Started - Sign In
-        </button>
+        </AnimatedButton>
+        <p className="mt-8 italic font-thin text-sm md:text-lg text-gray-400 max-w-2xl hero-text">
+          “I built this to save myself from the monthly struggle of remembering what I did, organizing logs, and rewriting reports — now it’s here to make that easier for everyone.”
+        </p>
       </div>
     );
   }
@@ -56,11 +60,11 @@ export default function Home() {
   return (
     <div ref={containerRef} className="font-sans items-center justify-items-center min-h-[80vh] p-2 sm:p-2 text-white background">
       <main className="w-full flex flex-col items-center sm:items-start">
-        <h1 className="text-4xl mt-2 md:mt-4 self-center font-bold">Welcome, {session.user?.name}!</h1>
+        <h1 className="text-4xl mt-8 md:mt-4 self-center font-bold">Welcome, {session.user?.name}!</h1>
         <div className="log-entry-form w-full">
           <LogEntryForm />
         </div>
       </main>
-      </div>
+    </div>
   );
 }

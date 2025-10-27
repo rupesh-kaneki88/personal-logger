@@ -5,6 +5,7 @@ import AuthProviders from "../components/AuthProviders";
 import DynamicBackground from "../components/DynamicBackground"; // Import DynamicBackground
 import { Toaster } from "sonner";
 import MinimumLoadingWrapper from "../components/MinimumLoadingWrapper";
+import ScrollToTop from "../components/ScrollToTop";
 
 const roboto = Roboto({
   weight: ["300", "400", "500", "700"],
@@ -27,6 +28,7 @@ export default function RootLayout({
       <body className={`${roboto.variable} font-sans antialiased`}>
         <DynamicBackground /> {/* Render DynamicBackground here */}
         <AuthProviders>
+          <ScrollToTop />
           <MinimumLoadingWrapper>
             {children}
           </MinimumLoadingWrapper>

@@ -20,7 +20,7 @@ export default function MinimumLoadingWrapper({ children }: MinimumLoadingWrappe
 
   if (!showChildren) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-gray-900 z-50">
+      <div className="fixed inset-0 flex items-center justify-center bg-gray-900 z-30">
         <LoadingPage />
       </div>
     );

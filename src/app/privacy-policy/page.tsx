@@ -2,7 +2,7 @@
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col h-[70vh]">
       <main className="flex-grow container mx-auto p-8 text-gray-300">
         <h1 className="text-4xl font-bold mb-6 text-white">Privacy Policy</h1>
         <section className="mb-8">
@@ -57,9 +57,19 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4 text-white">5. Contact Us</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-white">5. Data Security</h2>
+          <p className="mb-4">
+            We use administrative, technical, and physical security measures to help protect your personal information. While we have taken reasonable steps to secure the personal information you provide to us, please be aware that despite our efforts, no security measures are perfect or impenetrable, and no method of data transmission can be guaranteed against any interception or other type of misuse.
+          </p>
+          <p className="mb-4">
+            Specifically, we implement application-level encryption on sensitive data fields, such as the title and content of your logs and tasks. This means that this information is encrypted when stored in our database and can only be decrypted by the application when you are logged in and viewing your data.
+          </p>
+        </section>
+
+        <section className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4 text-white">6. Contact Us</h2>
           <p>
-            If you have questions or comments about this policy, you may email us.
+            If you have questions or comments about this policy, you may email us at <a href="mailto:rupeshchavan048@gmail.com" className="text-blue-400 hover:underline">rupeshchavan048@gmail.com</a>.
           </p>
         </section>
       </main>

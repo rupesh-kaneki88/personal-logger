@@ -13,7 +13,11 @@ export default function Footer() {
           Terms of Service
         </Link>
       </nav>
-      <p>&copy; {new Date().getFullYear()} Developed by Rupesh.</p>
+      <p>&copy; {new Date().getFullYear()} Developed by &nbsp;
+        <Link className="underline" href={"https://www.linkedin.com/in/rupesh-chavan-926409154/"} target="_blank">
+          Rupesh.
+        </Link>
+      </p>
     </footer>
   );
 }
