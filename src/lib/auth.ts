@@ -1,6 +1,6 @@
 import { AuthOptions } from "next-auth";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
-import clientPromise from "@/lib/mongodb";
+import { clientPromise } from "@/lib/dbConnect";
 import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 import nodemailer from 'nodemailer';
