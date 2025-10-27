@@ -16,7 +16,11 @@ export default function Home() {
 
   useGSAP(() => {
     gsap.from(".hero-text", { opacity: 0, y: 50, duration: 1, stagger: 0.3, ease: "power3.out" });
-    gsap.from(".hero-button", { opacity: 0, scale: 0.8, duration: 0.8, ease: "back.out(1.7)", delay: 1 });
+    gsap.fromTo(
+      ".hero-button",
+      { opacity: 0, scale: 0.8 },
+      { opacity: 1, scale: 1, duration: 0.8, ease: "back.out(1.7)", delay: 1 }
+    );
     gsap.from(".log-entry-form", { opacity: 0, y: 50, duration: 1, ease: "power3.out", delay: 0.5 });
 
     // Background animation
@@ -38,7 +42,7 @@ export default function Home() {
         </p>
         <button
           onClick={() => signIn()}
-          className="hero-button bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+          className="hero-button bg-blue-600 hover:bg-blue-700 text-white opacity-0 font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
         >
           Get Started - Sign In
         </button>
