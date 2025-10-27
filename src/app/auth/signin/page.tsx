@@ -54,7 +54,7 @@ export default function SignInPage() {
         {error && <p className="text-red-400 text-center">{error}</p>}
         {message && <p className="text-green-400 text-center">{message}</p>}
 
-        {/* <div>
+        <div>
           <button
             onClick={() => signIn("google", { callbackUrl: "/" })}
             className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-gray-900 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
@@ -71,7 +71,7 @@ export default function SignInPage() {
         </div>
         <div className="relative flex justify-center text-sm">
           <span className="px-2 bg-gray-800 text-gray-300">Or continue with</span>
-        </div> */}
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="email" className="sr-only">
