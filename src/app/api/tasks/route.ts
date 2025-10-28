@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/dbConnect';
+import { decrypt, encrypt } from '@/lib/encryption';
 import Task from '@/models/Task';
-import { encrypt, decrypt } from '@/lib/encryption';
+import { getServerSession } from 'next-auth/next';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
   await dbConnect();
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { title, description, dueDate, priority } = await req.json();
+    const { title, description, dueDate, time, priority, createGoogleEvent } = await req.json();
 
     if (!title) {
       return NextResponse.json({ message: 'Title is required' }, { status: 400 });
@@ -25,9 +25,64 @@ export async function POST(req: NextRequest) {
       title: encrypt(title),
       description: description ? encrypt(description) : undefined,
       dueDate: dueDate ? new Date(dueDate) : undefined,
+      time: time,
       priority,
       isCompleted: false,
     });
+
+    if (createGoogleEvent && session.accessToken) {
+      try {
+        // console.log("Session is active");
+        const { google } = require('googleapis');
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.setCredentials({
+          access_token: session.accessToken,
+        });
+
+        const calendar = google.calendar({
+          version: 'v3',
+          auth: oauth2Client,
+        });
+
+        const eventStart = new Date(dueDate);
+        if (time) {
+          const [hours, minutes] = time.split(':').map(Number);
+          eventStart.setHours(hours);
+          eventStart.setMinutes(minutes);
+        }
+
+        const eventEnd = new Date(eventStart.getTime() + 60 * 60 * 1000);
+
+
+        const event = {
+          summary: title,
+          description: description,
+          start: {
+            dateTime: eventStart.toISOString(),
+            timeZone: 'UTC',
+          },
+          end: {
+            dateTime: eventEnd.toISOString(),
+            timeZone: 'UTC',
+          },
+        };
+
+        const createdEvent = await calendar.events.insert({
+          calendarId: 'primary',
+          resource: event,
+        });
+
+        // console.log("Event created successfully");
+
+        if (createdEvent.data.id) {
+          // console.log("Google event created: ",createdEvent.data.id);
+          newTask.googleCalendarEventId = createdEvent.data.id;
+        }
+      } catch (error: any) {
+        console.error('Error creating Google Calendar event:', error);
+        // Do not block task creation if calendar event fails
+      }
+    }
 
     await newTask.save();
 

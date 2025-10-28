@@ -10,15 +10,17 @@ interface EditTaskModalProps {
   task: ITask;
   onClose: () => void;
   onSave: (updatedTask: ITask) => void;
+  createGoogleEvent?: boolean;
 }
 
-export default function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
+export default function EditTaskModal({ task, onClose, onSave, createGoogleEvent }: EditTaskModalProps) {
   const modalContentRef = useRef(null);
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
   const [dueDate, setDueDate] = useState<string>(
     task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : ""
   );
+  const [time, setTime] = useState<string>(task.time || "");
   const [priority, setPriority] = useState(task.priority || "Medium");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,9 +68,11 @@ export default function EditTaskModal({ task, onClose, onSave }: EditTaskModalPr
         title,
         description,
         dueDate: dueDate ? new Date(dueDate) : undefined,
+        time,
         priority,
+        createGoogleEvent,
       };
-      await onSave(updatedTask as ITask);
+      await onSave(updatedTask as unknown as ITask);
       toast.success("Task updated successfully!", { id: loadingToast });
       onClose();
     } catch (err: any) {
@@ -80,7 +84,7 @@ export default function EditTaskModal({ task, onClose, onSave }: EditTaskModalPr
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
       <div
         ref={modalContentRef}
         className="bg-gray-800 p-6 sm:p-8 rounded-lg shadow-xl w-full max-w-sm sm:max-w-md lg:max-w-lg border border-gray-700 text-white"
@@ -117,6 +121,16 @@ export default function EditTaskModal({ task, onClose, onSave }: EditTaskModalPr
               className="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-white"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
+            />
+          </div>
+          <div>
+            <label htmlFor="edit-time" className="block text-sm font-medium text-gray-300">Time</label>
+            <input
+              type="time"
+              id="edit-time"
+              className="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-700 text-white"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
             />
           </div>
           <div>

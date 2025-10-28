@@ -17,7 +17,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
 
   try {
     const body = await req.json();
-    const { title: newTitle, description: newDescription, dueDate, priority, isCompleted } = body;
+    const { title: newTitle, description: newDescription, dueDate, time, priority, isCompleted, createGoogleEvent } = body;
 
     const task = await Task.findOne({ _id: id, userId: session.user.id });
 
@@ -39,6 +39,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
         task.description = encrypt(finalDescription);
     }
     task.dueDate = dueDate ? new Date(dueDate) : task.dueDate;
+    task.time = time || task.time;
     task.priority = priority || task.priority;
 
     if (isCompleted !== undefined && isCompleted !== task.isCompleted) {
@@ -59,6 +60,52 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
         await newLog.save();
       } else {
         task.completedAt = undefined;
+      }
+    }
+
+    if (createGoogleEvent && task.googleCalendarEventId && session.accessToken) {
+      try {
+        const { google } = require('googleapis');
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.setCredentials({
+          access_token: session.accessToken,
+        });
+
+        const calendar = google.calendar({
+          version: 'v3',
+          auth: oauth2Client,
+        });
+
+        const eventStart = new Date(task.dueDate);
+        if (task.time) {
+          const [hours, minutes] = task.time.split(':').map(Number);
+          eventStart.setHours(hours);
+          eventStart.setMinutes(minutes);
+        }
+
+        const eventEnd = new Date(eventStart.getTime() + 60 * 60 * 1000);
+
+        const event = {
+          summary: finalTitle,
+          description: finalDescription,
+          start: {
+            dateTime: eventStart.toISOString(),
+            timeZone: 'UTC',
+          },
+          end: {
+            dateTime: eventEnd.toISOString(),
+            timeZone: 'UTC',
+          },
+        };
+
+        await calendar.events.update({
+          calendarId: 'primary',
+          eventId: task.googleCalendarEventId,
+          resource: event,
+        });
+      } catch (error: any) {
+        console.error('Error updating Google Calendar event:', error);
+        // Do not block task update if calendar event update fails
       }
     }
 
@@ -88,11 +135,39 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
   }
 
   try {
-    const result = await Task.deleteOne({ _id: id, userId: session.user.id });
+    const task = await Task.findOne({ _id: id, userId: session.user.id });
 
-    if (result.deletedCount === 0) {
+    if (!task) {
       return NextResponse.json({ message: 'Task not found' }, { status: 404 });
     }
+
+    // Get createGoogleEvent from query parameters or body if needed for delete
+    const { createGoogleEvent } = await req.json(); // Assuming createGoogleEvent can be sent with DELETE
+
+    if (createGoogleEvent && task.googleCalendarEventId && session.accessToken) {
+      try {
+        const { google } = require('googleapis');
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.setCredentials({
+          access_token: session.accessToken,
+        });
+
+        const calendar = google.calendar({
+          version: 'v3',
+          auth: oauth2Client,
+        });
+
+        await calendar.events.delete({
+          calendarId: 'primary',
+          eventId: task.googleCalendarEventId,
+        });
+      } catch (error: any) {
+        console.error('Error deleting Google Calendar event:', error);
+        // Do not block task deletion if calendar event deletion fails
+      }
+    }
+
+    await Task.deleteOne({ _id: id, userId: session.user.id });
 
     return NextResponse.json({ message: 'Task deleted successfully' }, { status: 200 });
   } catch (error: any) {

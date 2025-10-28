@@ -6,6 +6,7 @@ import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ITask } from '@/models/Task';
 import { toast } from 'sonner';
+import GoogleReconnectModal from '@/components/GoogleReconnectModal';
 
 interface TaskEntryFormProps {
   onTaskAdded: (task: ITask) => void;
@@ -16,9 +17,11 @@ export default function TaskEntryForm({ onTaskAdded }: TaskEntryFormProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [time, setTime] = useState<string>("");
   const [priority, setPriority] = useState<'Low' | 'Medium' | 'High'>('Medium');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showGoogleReconnectModal, setShowGoogleReconnectModal] = useState(false);
 
   const formRef = useRef(null);
 
@@ -30,6 +33,7 @@ export default function TaskEntryForm({ onTaskAdded }: TaskEntryFormProps) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setShowGoogleReconnectModal(false);
 
     if (!session?.user?.id) {
       setError("User not authenticated.");
@@ -37,6 +41,27 @@ export default function TaskEntryForm({ onTaskAdded }: TaskEntryFormProps) {
       return;
     }
 
+    // Check Google Calendar connection status
+    const googleStatusResponse = await fetch('/api/google-calendar/status');
+    const googleStatusData = await googleStatusResponse.json();
+
+    if (!googleStatusData.isConnected) {
+      setShowGoogleReconnectModal(true);
+      setLoading(false);
+      return;
+    }
+
+    await submitTask();
+  };
+
+  const handleContinueWithoutConnect = async () => {
+    setShowGoogleReconnectModal(false);
+    await submitTask(false); // Pass false to indicate not to create Google Calendar event
+  };
+
+  const submitTask = async (createGoogleEvent: boolean = true) => {
+    setLoading(true);
+    setError(null);
     try {
       const response = await fetch("/api/tasks", {
         method: "POST",
@@ -44,11 +69,13 @@ export default function TaskEntryForm({ onTaskAdded }: TaskEntryFormProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          userId: session.user.id,
+          userId: session!.user!.id,
           title,
           description,
           dueDate: dueDate ? new Date(dueDate) : undefined,
+          time,
           priority,
+          createGoogleEvent, // Pass this flag to the API
         }),
       });
 
@@ -62,6 +89,7 @@ export default function TaskEntryForm({ onTaskAdded }: TaskEntryFormProps) {
       setTitle("");
       setDescription("");
       setDueDate(new Date().toISOString().split('T')[0]);
+      setTime("");
       setPriority('Medium');
 
       gsap.to(formRef.current, {
@@ -119,6 +147,16 @@ export default function TaskEntryForm({ onTaskAdded }: TaskEntryFormProps) {
           />
         </div>
         <div>
+          <label htmlFor="time" className="block text-sm font-medium text-gray-300">Time (optional)</label>
+          <input
+            type="time"
+            id="time"
+            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+          />
+        </div>
+        <div>
           <label htmlFor="priority" className="block text-sm font-medium text-gray-300">Priority</label>
           <select
             id="priority"
@@ -139,6 +177,12 @@ export default function TaskEntryForm({ onTaskAdded }: TaskEntryFormProps) {
           {loading ? "Adding..." : "Add Task"}
         </button>
       </form>
+
+      <GoogleReconnectModal
+        isOpen={showGoogleReconnectModal}
+        onClose={() => setShowGoogleReconnectModal(false)}
+        onContinueWithoutConnect={handleContinueWithoutConnect}
+      />
     </div>
   );
 }

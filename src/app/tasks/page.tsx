@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signIn } from 'next-auth/react';
 import TaskEntryForm from '@/components/TaskEntryForm';
 import TaskList from '@/components/TaskList';
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';
@@ -24,6 +24,7 @@ export default function TasksPage() {
   const [taskToComplete, setTaskToComplete] = useState<ITask | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState<ITask | null>(null);
+  const [googleConnected, setGoogleConnected] = useState(true); // Assume connected until checked
 
   const pageRef = useRef(null);
 
@@ -53,6 +54,12 @@ export default function TasksPage() {
   useEffect(() => {
     if (session) {
       fetchTasks();
+      const checkGoogleConnection = async () => {
+        const response = await fetch('/api/google-calendar/status');
+        const data = await response.json();
+        setGoogleConnected(data.isConnected);
+      };
+      checkGoogleConnection();
     }
   }, [session]);
 
@@ -78,9 +85,14 @@ export default function TasksPage() {
     try {
       const response = await fetch(`/api/tasks/${taskToDelete._id}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ createGoogleEvent: googleConnected }),
       });
       if (!response.ok) {
-        throw new Error('Failed to delete task');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete task');
       }
       setTasks((prevTasks) => prevTasks.filter((task) => task._id !== taskToDelete._id));
       toast.success('Task deleted successfully!');
@@ -144,10 +156,11 @@ export default function TasksPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(updatedTask),
+        body: JSON.stringify({ ...updatedTask, createGoogleEvent: googleConnected }),
       });
       if (!response.ok) {
-        throw new Error('Failed to update task');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update task');
       }
       const newTask: ITask = await response.json();
       handleTaskUpdated(newTask);
@@ -172,6 +185,18 @@ export default function TasksPage() {
   return (
     <div ref={pageRef} className="container mx-auto p-4">
       <h1 className="text-4xl font-bold text-center text-white mb-8">Your Tasks</h1>
+      {!googleConnected && (
+        <div className="bg-gray-800 border-l-4 border-yellow-500 text-yellow-600 p-4 mb-4" role="alert">
+          <p className="font-bold">Google Calendar Disconnected</p>
+          <p>Your Google account is not connected or authentication has expired. Google Calendar features will not work until you reconnect.</p>
+          <button
+            onClick={() => signIn('google')}
+            className="mt-2 px-4 py-2 bg-transparent border cursor-pointer hover:text-gray-400 rounded-md text-white font-semibold transition-colors duration-200"
+          >
+            Reconnect to Google
+          </button>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-1">
           <TaskEntryForm onTaskAdded={handleTaskAdded} />
@@ -209,6 +234,7 @@ export default function TasksPage() {
           task={taskToEdit}
           onClose={handleCloseEditModal}
           onSave={handleSaveEditedTask}
+          createGoogleEvent={googleConnected}
         />
       )}
     </div>

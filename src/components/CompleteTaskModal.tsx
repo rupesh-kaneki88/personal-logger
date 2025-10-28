@@ -42,7 +42,7 @@ export default function CompleteTaskModal({ task, onClose, onConfirm }: Complete
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
       <div ref={modalRef} className="bg-gray-800 p-6 sm:p-8 rounded-lg shadow-xl border border-gray-700 w-full max-w-sm sm:max-w-md lg:max-w-lg text-white">
         <h2 className="text-2xl font-bold text-white mb-4">Complete Task & Log</h2>
         <p className="text-gray-300 mb-6">You are about to mark the task "{task.title}" as complete and create a log entry for it.</p>
