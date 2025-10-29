@@ -8,9 +8,9 @@ import { useGSAP } from "@gsap/react";
 interface TaskListProps {
   tasks: ITask[];
   onTaskUpdated: (task: ITask) => void;
-  onDeleteClick: (task: ITask) => void;
-  onEditClick: (task: ITask) => void;
-  onCompleteClick: (task: ITask) => void;
+  onDeleteClick: (task: ITask, trigger: HTMLElement) => void;
+  onEditClick: (task: ITask, trigger: HTMLElement) => void;
+  onCompleteClick: (task: ITask, trigger: HTMLElement) => void;
 }
 
 export default function TaskList({ tasks, onTaskUpdated, onDeleteClick, onEditClick, onCompleteClick }: TaskListProps) {
@@ -22,7 +22,7 @@ export default function TaskList({ tasks, onTaskUpdated, onDeleteClick, onEditCl
 
   return (
     <div ref={listRef} className="bg-gray-800 rounded-lg shadow-xl border border-gray-700 p-4">
-      <h2 className="text-2xl font-bold text-white mb-4">Active Tasks</h2>
+      <h2 id="active-tasks-heading" className="text-2xl font-bold text-white mb-4">Active Tasks</h2>
       {tasks.length === 0 ? (
         <p className="text-gray-400">No active tasks. Time to add some!</p>
       ) : (
@@ -31,6 +31,8 @@ export default function TaskList({ tasks, onTaskUpdated, onDeleteClick, onEditCl
             <li
               key={task._id.toString()}
               className="task-item bg-gray-700 p-4 rounded-md flex flex-col md:flex-row justify-between items-start md:items-center shadow-md"
+              tabIndex={0}
+              aria-label={`Task: ${task.title}, Description: ${task.description} Due: ${task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No due date'}, Priority: ${task.priority}`}
             >
               <div className="flex-grow">
                 <h3 className="text-lg font-semibold text-white">{task.title}</h3>
@@ -56,19 +58,19 @@ export default function TaskList({ tasks, onTaskUpdated, onDeleteClick, onEditCl
               </div>
               <div className="flex space-x-2 mt-3 md:mt-0">
                 <button
-                  onClick={() => onCompleteClick(task)}
+                  onClick={(e) => onCompleteClick(task, e.currentTarget as HTMLElement)}
                   className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors duration-200"
                 >
                   Complete
                 </button>
                 <button
-                  onClick={() => onEditClick(task)}
+                  onClick={(e) => onEditClick(task, e.currentTarget as HTMLElement)}
                   className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-md text-sm font-medium transition-colors duration-200"
                 >
                   Edit
                 </button>
                 <button
-                  onClick={() => onDeleteClick(task)}
+                  onClick={(e) => onDeleteClick(task, e.currentTarget as HTMLElement)}
                   className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-medium transition-colors duration-200"
                 >
                   Delete

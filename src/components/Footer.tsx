@@ -14,7 +14,7 @@ export default function Footer() {
         </Link>
       </nav>
       <p>&copy; {new Date().getFullYear()} Developed by &nbsp;
-        <Link className="underline" href={"https://www.linkedin.com/in/rupesh-chavan-926409154/"} target="_blank">
+        <Link className="underline" href={"https://www.linkedin.com/in/rupesh-chavan-926409154/"} target="_blank" rel="noopener noreferrer">
           Rupesh.
         </Link>
       </p>

@@ -173,16 +173,16 @@ export default function DashboardPage() {
       <h1 className="text-3xl font-bold mb-6">Welcome to your Dashboard, {session.user?.name}!</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="bg-gray-800 shadow-md rounded-lg p-4">
-          <h2 className="text-xl font-semibold mb-2">Total Logs</h2>
+        <div className="bg-gray-800 shadow-md rounded-lg p-4" role="region" aria-labelledby="total-logs-heading">
+          <h2 id="total-logs-heading" className="text-xl font-semibold mb-2">Total Logs</h2>
           <p className="text-3xl font-bold">{totalLogs}</p>
         </div>
-        <div className="bg-gray-800 shadow-md rounded-lg p-4">
-          <h2 className="text-xl font-semibold mb-2">Technical Logs</h2>
+        <div className="bg-gray-800 shadow-md rounded-lg p-4" role="region" aria-labelledby="technical-logs-heading">
+          <h2 id="technical-logs-heading" className="text-xl font-semibold mb-2">Technical Logs</h2>
           <p className="text-3xl font-bold">{technicalLogs}</p>
         </div>
-        <div className="bg-gray-800 shadow-md rounded-lg p-4">
-          <h2 className="text-xl font-semibold mb-2">Non-Technical Logs</h2>
+        <div className="bg-gray-800 shadow-md rounded-lg p-4" role="region" aria-labelledby="non-technical-logs-heading">
+          <h2 id="non-technical-logs-heading" className="text-xl font-semibold mb-2">Non-Technical Logs</h2>
           <p className="text-3xl font-bold">{nonTechnicalLogs}</p>
         </div>
       </div>
@@ -203,7 +203,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Recent Logs</h2>
+        <h2 id="recent-logs-heading" className="text-2xl font-bold">Recent Logs</h2>
         <Link href="/logs" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
           View All
         </Link>
@@ -211,7 +211,7 @@ export default function DashboardPage() {
       {logs.length === 0 ? (
         <p>No logs yet. Start logging your work!</p>
       ) : (
-        <div className="relative h-48 mb-8">
+        <div className="relative h-48 mb-8" role="region" aria-labelledby="recent-logs-heading">
           {logs.map((log, index) => (
             <div
               key={log._id.toString()}
@@ -222,6 +222,8 @@ export default function DashboardPage() {
                 transform: `scale(${1 - index * 0.05})`,
                 opacity: 1 - index * 0.2,
               }}
+              tabIndex={0}
+              aria-label={`Log: ${log.title}, Category: ${log.category || "N/A"}, Logged on: ${new Date(log.timestamp).toLocaleDateString()}`}
             >
               <h3 className="text-lg font-semibold text-white">{log.title}</h3>
               <p className="text-gray-200 line-clamp-2">{log.content}</p>

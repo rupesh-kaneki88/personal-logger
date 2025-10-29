@@ -54,11 +54,16 @@ export default function DashboardTaskList({ items, selectedDate, showGoogleEvent
           {filteredItems.map(item => {
             const isSelected = selectedDate && isSameDay(item.date, selectedDate);
             return (
-              <li key={item.id} className={`bg-gray-700 p-3 rounded-md shadow-sm ${isSelected ? 'bg-blue-900' : ''}`}>
+              <li
+              key={item.id}
+              className={`bg-gray-700 p-3 rounded-md shadow-sm ${isSelected ? 'bg-blue-900' : ''}`}
+              tabIndex={0}
+              aria-label={`${item.source === 'google' ? 'Google Calendar Event' : 'Task'}: ${item.title}, Due: ${format(item.date, 'PPP')}${item.priority ? ', Priority: ' + item.priority : ''}`}
+            >
                 <div className="flex justify-between items-start">
                   <h3 className="text-lg font-semibold text-white">{item.title}</h3>
                   {item.source === 'google' && (
-                    <CalendarIcon className="h-5 w-5 text-blue-400" title="Google Calendar Event" />
+                    <CalendarIcon className="h-5 w-5 text-blue-400" title="Google Calendar Event" aria-label="Google Calendar Event" />
                   )}
                 </div>
                 {item.description && (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 
@@ -9,6 +9,7 @@ interface DeleteConfirmationModalProps {
   onClose: () => void;
   onConfirm: () => void;
   message: string;
+  triggerElement?: HTMLElement | null; // New prop to store the element that opened the modal
 }
 
 export default function DeleteConfirmationModal({
@@ -16,16 +17,33 @@ export default function DeleteConfirmationModal({
   onClose,
   onConfirm,
   message,
+  triggerElement,
 }: DeleteConfirmationModalProps) {
-  const modalContentRef = useRef(null);
+  const modalContentRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedElement = useRef<HTMLElement | null>(null);
 
   useGSAP(() => {
     if (isOpen) {
+      previouslyFocusedElement.current = triggerElement || document.activeElement as HTMLElement;
       gsap.fromTo(
         modalContentRef.current,
         { scale: 0.8, opacity: 0 },
-        { scale: 1, opacity: 1, ease: "elastic.out(1, 0.75)", duration: 0.7 }
+        { scale: 1, opacity: 1, ease: "elastic.out(1, 0.75)", duration: 0.7,
+          onComplete: () => {
+            modalContentRef.current?.focus(); // Focus the modal container
+          }
+        }
       );
+    } else {
+      gsap.to(modalContentRef.current, {
+        scale: 0.8,
+        opacity: 0,
+        ease: "elastic.in(1, 0.75)",
+        duration: 0.5,
+        onComplete: () => {
+          previouslyFocusedElement.current?.focus(); // Return focus to the trigger element
+        }
+      });
     }
   }, { scope: modalContentRef, dependencies: [isOpen] });
 
@@ -52,12 +70,18 @@ export default function DeleteConfirmationModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-confirmation-modal-title"
+      tabIndex={-1} // Make the modal container focusable
+      ref={modalContentRef} // Attach ref to the outer div for focus
+    >
       <div
-        ref={modalContentRef}
         className="bg-gray-800 p-6 sm:p-8 rounded-lg shadow-xl w-full max-w-sm border border-gray-700 text-white text-center"
       >
-        <h2 className="text-2xl font-bold mb-4">Confirm Action</h2>
+        <h2 id="delete-confirmation-modal-title" className="text-2xl font-bold mb-4">Confirm Action</h2>
         <p className="mb-6">{message}</p>
         <div className="flex justify-center space-x-4">
           <button

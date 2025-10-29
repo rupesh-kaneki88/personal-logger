@@ -45,10 +45,12 @@ export default function LogsPage() {
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [logToDelete, setLogToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [deleteTriggerElement, setDeleteTriggerElement] = useState<HTMLElement | null>(null);
 
-  const handleDelete = (e: React.MouseEvent, logId: string, logTitle: string) => {
+  const handleDelete = (e: React.MouseEvent<HTMLButtonElement>, logId: string, logTitle: string) => {
     e.stopPropagation();
     setLogToDelete({ id: logId, title: logTitle });
+    setDeleteTriggerElement(e.currentTarget);
     setIsDeleteModalOpen(true);
   };
 
@@ -83,10 +85,12 @@ export default function LogsPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentLog, setCurrentLog] = useState<any | null>(null);
+  const [editTriggerElement, setEditTriggerElement] = useState<HTMLElement | null>(null);
 
-  const handleEdit = (e: React.MouseEvent, log: any) => {
+  const handleEdit = (e: React.MouseEvent<HTMLButtonElement>, log: any) => {
     e.stopPropagation();
     setCurrentLog(log);
+    setEditTriggerElement(e.currentTarget);
     setIsModalOpen(true);
   };
 
@@ -189,8 +193,12 @@ export default function LogsPage() {
                 }
               }}
             >
-              <div className="flex justify-between items-center">
-                <h3 className="text-xl font-semibold text-white">{log.title}</h3>
+              <div
+                className="flex justify-between items-center"
+                aria-label={`Log: ${log.title}`}>
+                <h3 className="text-xl font-semibold text-white">{log.title}
+                  <span className="sr-only">. </span>  
+                </h3>                
                 <div className="flex space-x-2">
                   <button
                     onClick={(e) => handleEdit(e, log)}
@@ -213,10 +221,15 @@ export default function LogsPage() {
                 className="mt-4 border-t border-gray-700 pt-4"
                 style={{ display: expandedLogId === log._id.toString() ? "block" : "none", height: expandedLogId === log._id.toString() ? "auto" : 0 }}
               >
-                <p className="text-gray-200">{log.content}</p>
+                <p id={`log-description-${log._id}`} className="text-gray-200">{log.content}</p>
                 <p className="text-sm text-gray-400 mt-2">
-                  Category: {log.category || "N/A"} | Duration: {log.duration || "N/A"} mins |{" "}
-                  {new Date(log.timestamp).toLocaleString()}
+                  <span>Category: {log.category || "N/A"}</span>
+                  <span className="sr-only">. </span>
+                  <span aria-hidden="true"> | </span>
+                  <span>Duration: {log.duration || "N/A"} mins</span>
+                  <span className="sr-only">. </span>
+                  <span aria-hidden="true"> | </span>
+                  <span>Logged at: {new Date(log.timestamp).toLocaleString()}</span>
                 </p>
               </div>
             </div>
@@ -225,7 +238,12 @@ export default function LogsPage() {
       )}
 
       {isModalOpen && currentLog && (
-        <EditLogModal log={currentLog} onClose={handleCloseModal} onSave={handleSaveEditedLog} />
+        <EditLogModal
+          log={currentLog}
+          onClose={handleCloseModal}
+          onSave={handleSaveEditedLog}
+          triggerElement={editTriggerElement}
+        />
       )}
 
       {isDeleteModalOpen && logToDelete && (
@@ -234,6 +252,7 @@ export default function LogsPage() {
           onClose={handleCancelDelete}
           onConfirm={handleConfirmDelete}
           message={`Are you sure you want to delete the log entry: "${logToDelete.title}"?`}
+          triggerElement={deleteTriggerElement}
         />
       )}
     </div>

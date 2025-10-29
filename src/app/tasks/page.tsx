@@ -20,10 +20,13 @@ export default function TasksPage() {
   const [error, setError] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<ITask | null>(null);
+  const [deleteTriggerElement, setDeleteTriggerElement] = useState<HTMLElement | null>(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [taskToComplete, setTaskToComplete] = useState<ITask | null>(null);
+  const [completeTriggerElement, setCompleteTriggerElement] = useState<HTMLElement | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState<ITask | null>(null);
+  const [editTriggerElement, setEditTriggerElement] = useState<HTMLElement | null>(null);
   const [googleConnected, setGoogleConnected] = useState(true); // Assume connected until checked
 
   const pageRef = useRef(null);
@@ -75,8 +78,9 @@ export default function TasksPage() {
     toast.success('Task updated successfully!');
   };
 
-  const handleDeleteClick = (task: ITask) => {
+  const handleDeleteClick = (task: ITask, trigger: HTMLElement) => {
     setTaskToDelete(task);
+    setDeleteTriggerElement(trigger);
     setShowDeleteModal(true);
   };
 
@@ -110,8 +114,9 @@ export default function TasksPage() {
     setTaskToDelete(null);
   };
 
-  const handleCompleteClick = (task: ITask) => {
+  const handleCompleteClick = (task: ITask, trigger: HTMLElement) => {
     setTaskToComplete(task);
+    setCompleteTriggerElement(trigger);
     setShowCompleteModal(true);
   };
 
@@ -144,8 +149,9 @@ export default function TasksPage() {
     setTaskToComplete(null);
   };
 
-  const handleEditClick = (task: ITask) => {
+  const handleEditClick = (task: ITask, trigger: HTMLElement) => {
     setTaskToEdit(task);
+    setEditTriggerElement(trigger);
     setShowEditModal(true);
   };
 
@@ -201,7 +207,7 @@ export default function TasksPage() {
         <div className="md:col-span-1">
           <TaskEntryForm onTaskAdded={handleTaskAdded} />
         </div>
-        <div className="md:col-span-2">
+        <div className="md:col-span-2" role="region" aria-labelledby="active-tasks-heading">
           <TaskList
             tasks={tasks.filter(task => !task.isCompleted)}
             onTaskUpdated={handleTaskUpdated}
@@ -218,6 +224,7 @@ export default function TasksPage() {
           onClose={handleCancelDelete}
           onConfirm={handleConfirmDelete}
           message={`Are you sure you want to delete the task: "${taskToDelete.title}"?`}
+          triggerElement={deleteTriggerElement}
         />
       )}
 
@@ -226,6 +233,7 @@ export default function TasksPage() {
           task={taskToComplete}
           onClose={handleCancelComplete}
           onConfirm={handleConfirmComplete}
+          triggerElement={completeTriggerElement}
         />
       )}
 
@@ -235,6 +243,7 @@ export default function TasksPage() {
           onClose={handleCloseEditModal}
           onSave={handleSaveEditedTask}
           createGoogleEvent={googleConnected}
+          triggerElement={editTriggerElement}
         />
       )}
     </div>

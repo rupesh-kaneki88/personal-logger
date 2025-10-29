@@ -126,6 +126,7 @@ export default function DashboardCalendar({ tasks, onDayClick, selectedDate, sho
                 <CalendarCell
                   date={date}
                   className="relative flex flex-col items-center justify-center h-14 w-14 rounded-md cursor-pointer hover:bg-gray-700 data-[selected]:bg-blue-600 data-[disabled]:text-gray-500"
+                  aria-label={`${date.day}, ${dayTasks.length} tasks, ${dayGoogleEvents.length} events`}
                 >
                   <div>{date.day}</div>
                   <div className="flex flex-wrap justify-center mt-1">

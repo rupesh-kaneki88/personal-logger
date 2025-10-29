@@ -41,6 +41,10 @@ export default function ReportsPage() {
       setOpenReportId(null);
     } else {
       setOpenReportId(reportId);
+      setTimeout(() => {
+        const element = reportRefs.current[reportId];
+        element?.focus();
+      }, 600); 
     }
   };
 
@@ -80,15 +84,34 @@ export default function ReportsPage() {
         <div className="grid grid-cols-1 gap-4">
           {reports.map((report) => (
             <div key={report._id} className="bg-gray-800 shadow-md rounded-lg overflow-hidden">
-              <div className="p-4 cursor-pointer" onClick={() => toggleReport(report._id)}>
-                <h2 className="text-xl font-semibold mb-2">{report.title}</h2>
+              <div
+                className="p-4 cursor-pointer"
+                onClick={() => toggleReport(report._id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    toggleReport(report._id);
+                  }
+                }}
+                aria-expanded={openReportId === report._id}
+                aria-controls={`report-content-${report._id}`}
+                aria-label={`Report from ${new Date(report.startDate).toLocaleDateString()} to ${new Date(report.endDate).toLocaleDateString()}, currently ${openReportId === report._id ? 'expanded' : 'collapsed'}`}
+              >
+                <h2 id={`report-title-${report._id}`} className="text-xl font-semibold mb-2">
+                  {report.title}
+                </h2>
                 <p className="text-sm text-gray-400">
                   Report from {new Date(report.startDate).toLocaleDateString()} to {new Date(report.endDate).toLocaleDateString()}
                 </p>
               </div>
               <div
-                ref={el => {reportRefs.current[report._id] = el}}
+                id={`report-content-${report._id}`}
+                ref={(el) => { reportRefs.current[report._id] = el }}
                 className="h-0 opacity-0 overflow-hidden"
+                tabIndex={-1}
+                role="region"
+                aria-labelledby={`report-title-${report._id}`}
               >
                 <div className="p-4">
                   <div className="flex justify-between items-center mb-2">
@@ -96,6 +119,7 @@ export default function ReportsPage() {
                     <button
                       onClick={() => navigator.clipboard.writeText(report.reportContent)}
                       className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-sm"
+                      aria-label={`Copy report for ${report.title}`}
                     >
                       Copy
                     </button>

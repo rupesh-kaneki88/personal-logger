@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { gsap } from "gsap";
@@ -11,10 +9,17 @@ interface EditTaskModalProps {
   onClose: () => void;
   onSave: (updatedTask: ITask) => void;
   createGoogleEvent?: boolean;
+  triggerElement?: HTMLElement | null; // New prop
 }
 
-export default function EditTaskModal({ task, onClose, onSave, createGoogleEvent }: EditTaskModalProps) {
-  const modalContentRef = useRef(null);
+export default function EditTaskModal({
+  task,
+  onClose,
+  onSave,
+  createGoogleEvent,
+  triggerElement,
+}: EditTaskModalProps) {
+  const modalContentRef = useRef<HTMLDivElement>(null);
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
   const [dueDate, setDueDate] = useState<string>(
@@ -24,14 +29,34 @@ export default function EditTaskModal({ task, onClose, onSave, createGoogleEvent
   const [priority, setPriority] = useState(task.priority || "Medium");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const previouslyFocusedElement = useRef<HTMLElement | null>(null);
 
   useGSAP(() => {
-    gsap.fromTo(
-      modalContentRef.current,
-      { scale: 0.8, opacity: 0 },
-      { scale: 1, opacity: 1, ease: "elastic.out(1, 0.75)", duration: 0.7 }
-    );
-  }, { scope: modalContentRef });
+    if (modalContentRef.current) {
+      if (task) { // Modal is opening
+        previouslyFocusedElement.current = triggerElement || document.activeElement as HTMLElement;
+        gsap.fromTo(
+          modalContentRef.current,
+          { scale: 0.8, opacity: 0 },
+          { scale: 1, opacity: 1, ease: "elastic.out(1, 0.75)", duration: 0.7,
+            onComplete: () => {
+              modalContentRef.current?.focus();
+            }
+          }
+        );
+      } else { // Modal is closing
+        gsap.to(modalContentRef.current, {
+          scale: 0.8,
+          opacity: 0,
+          ease: "elastic.in(1, 0.75)",
+          duration: 0.5,
+          onComplete: () => {
+            previouslyFocusedElement.current?.focus();
+          }
+        });
+      }
+    }
+  }, { scope: modalContentRef, dependencies: [task] }); // Depend on 'task' to trigger open/close
 
   useEffect(() => {
     setTitle(task.title);
@@ -84,12 +109,18 @@ export default function EditTaskModal({ task, onClose, onSave, createGoogleEvent
   };
 
   return (
-    <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="edit-task-modal-title"
+      tabIndex={-1} // Make the modal container focusable
+      ref={modalContentRef} // Attach ref to the outer div for focus
+    >
       <div
-        ref={modalContentRef}
         className="bg-gray-800 p-6 sm:p-8 rounded-lg shadow-xl w-full max-w-sm sm:max-w-md lg:max-w-lg border border-gray-700 text-white"
       >
-        <h2 className="text-2xl font-bold mb-4">Edit Task</h2>
+        <h2 id="edit-task-modal-title" className="text-2xl font-bold mb-4">Edit Task</h2>
         {error && <p className="text-red-400 mb-4">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

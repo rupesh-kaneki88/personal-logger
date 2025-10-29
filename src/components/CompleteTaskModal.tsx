@@ -1,6 +1,4 @@
 
-"use client";
-
 import { useState, useEffect, useRef } from 'react';
 import { useGSAP } from '@gsap/react';
 import { ITask } from '@/models/Task';
@@ -10,21 +8,47 @@ interface CompleteTaskModalProps {
   task: ITask;
   onClose: () => void;
   onConfirm: (task: ITask, duration?: number, category?: string) => void;
+  triggerElement?: HTMLElement | null; // New prop
 }
 
-export default function CompleteTaskModal({ task, onClose, onConfirm }: CompleteTaskModalProps) {
+export default function CompleteTaskModal({
+  task,
+  onClose,
+  onConfirm,
+  triggerElement,
+}: CompleteTaskModalProps) {
   const [duration, setDuration] = useState<number | undefined>(undefined);
   const [category, setCategory] = useState('None');
   const [loading, setLoading] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedElement = useRef<HTMLElement | null>(null);
 
   useGSAP(() => {
-    gsap.fromTo(
-      modalRef.current,
-      { scale: 0.8, opacity: 0 },
-      { scale: 1, opacity: 1, ease: "elastic.out(1, 0.75)", duration: 0.7 }
-    );
-  }, { scope: modalRef });
+    if (modalRef.current) {
+      if (task) { // Modal is opening
+        previouslyFocusedElement.current = triggerElement || document.activeElement as HTMLElement;
+        gsap.fromTo(
+          modalRef.current,
+          { scale: 0.8, opacity: 0 },
+          { scale: 1, opacity: 1, ease: "elastic.out(1, 0.75)", duration: 0.7,
+            onComplete: () => {
+              modalRef.current?.focus();
+            }
+          }
+        );
+      } else { // Modal is closing
+        gsap.to(modalRef.current, {
+          scale: 0.8,
+          opacity: 0,
+          ease: "elastic.in(1, 0.75)",
+          duration: 0.5,
+          onComplete: () => {
+            previouslyFocusedElement.current?.focus();
+          }
+        });
+      }
+    }
+  }, { scope: modalRef, dependencies: [task] }); // Depend on 'task' to trigger open/close
 
   const handleCloseAnimation = (callback: () => void) => {
     gsap.to(modalRef.current, {
@@ -41,10 +65,19 @@ export default function CompleteTaskModal({ task, onClose, onConfirm }: Complete
     handleCloseAnimation(() => onConfirm(task, duration, category === 'None' ? undefined : category));
   };
 
+  if (!task) return null; // Render only if a task is provided
+
   return (
-    <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
-      <div ref={modalRef} className="bg-gray-800 p-6 sm:p-8 rounded-lg shadow-xl border border-gray-700 w-full max-w-sm sm:max-w-md lg:max-w-lg text-white">
-        <h2 className="text-2xl font-bold text-white mb-4">Complete Task & Log</h2>
+    <div
+      className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="complete-task-modal-title"
+      tabIndex={-1} // Make the modal container focusable
+      ref={modalRef} // Attach ref to the outer div for focus
+    >
+      <div className="bg-gray-800 p-6 sm:p-8 rounded-lg shadow-xl border border-gray-700 w-full max-w-sm sm:max-w-md lg:max-w-lg text-white">
+        <h2 id="complete-task-modal-title" className="text-2xl font-bold text-white mb-4">Complete Task & Log</h2>
         <p className="text-gray-300 mb-6">You are about to mark the task "{task.title}" as complete and create a log entry for it.</p>
         
         <div className="space-y-4">

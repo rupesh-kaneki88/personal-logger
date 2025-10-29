@@ -80,6 +80,8 @@ export default function Header() {
           <button
             onClick={toggleMobileMenu}
             className="text-white focus:outline-none"
+            aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={isMobileMenuOpen}
           >
             <svg
               className="w-6 h-6"
@@ -174,13 +176,15 @@ export default function Header() {
       <div
         ref={mobileMenuRef}
         className="sm:hidden bg-gray-800 border-t border-gray-700 py-0"
-        style={{ height: 0, overflow: "hidden" }}
+        style={{ height: 0, overflow: "hidden", display: "none" }} // Initially hidden for screen readers
+        role="menu"
       >
         <div className="flex flex-col items-center space-y-2 mb-2">
           <Link
             href="/"
             className="header-item px-4 py-2 rounded-md text-white transition-colors duration-200"
             onClick={() => { setIsMobileMenuOpen(false); setLoading(true); }}
+            role="menuitem"
           >
             Home
           </Link>
@@ -189,6 +193,7 @@ export default function Header() {
               href="/dashboard"
               className="header-item px-4 py-2 rounded-md text-white transition-colors duration-200"
               onClick={() => { setIsMobileMenuOpen(false); setLoading(true); }}
+              role="menuitem"
             >
               Dashboard
             </Link>
@@ -198,6 +203,7 @@ export default function Header() {
               href="/logs"
               className="header-item px-4 py-2 rounded-md text-white transition-colors duration-200"
               onClick={() => { setIsMobileMenuOpen(false); setLoading(true); }}
+              role="menuitem"
             >
               Logs
             </Link>
@@ -207,6 +213,7 @@ export default function Header() {
               href="/reports"
               className="header-item px-4 py-2 rounded-md text-white transition-colors duration-200"
               onClick={() => { setIsMobileMenuOpen(false); setLoading(true); }}
+              role="menuitem"
             >
               Reports
             </Link>
@@ -216,6 +223,7 @@ export default function Header() {
               href="/tasks"
               className="header-item px-4 py-2 rounded-md text-white transition-colors duration-200"
               onClick={() => { setIsMobileMenuOpen(false); setLoading(true); }}
+              role="menuitem"
             >
               Tasks
             </Link>

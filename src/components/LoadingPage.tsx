@@ -28,6 +28,7 @@ export default function LoadingPage() {
 
   return (
     <div className="flex items-center justify-center h-screen bg-gray-900">
+      <span className="sr-only" aria-live="polite">Loading...</span>
       <style jsx>{`
         @keyframes draw {
           0% {
