@@ -9,6 +9,7 @@ import { ITask } from "@/models/Task";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import LoadingPage from "@/components/LoadingPage";
+import GenerateReport from "@/components/GenerateReport";
 
 // Define the shape of Google Calendar events
 interface GoogleCalendarEvent {
@@ -235,76 +236,8 @@ export default function DashboardPage() {
           ))}
         </div>
       )}
-
-      <h2 className="text-2xl font-bold mb-4">Generate Report</h2>
-      <p className="text-sm text-gray-400 mb-4">Note: You can generate a new report once every 10 days to conserve API resources.</p>
-      <div className="bg-gray-800 shadow-md rounded-lg p-4 mb-8">
-        <div className="flex flex-col md:flex-row gap-4 mb-4">
-          <div>
-            <label htmlFor="startDate" className="block text-gray-300 text-sm font-bold mb-2">
-              Start Date:
-            </label>
-            <input
-              type="date"
-              id="startDate"
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 text-white"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-          </div>
-          <div>
-            <label htmlFor="endDate" className="block text-gray-300 text-sm font-bold mb-2">
-              End Date:
-            </label>
-            <input
-              type="date"
-              id="endDate"
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 text-white"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
-          </div>
-          <div>
-            <label htmlFor="reportTitle" className="block text-gray-300 text-sm font-bold mb-2">
-              Report Title:
-            </label>
-            <input
-              type="text"
-              id="reportTitle"
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 text-white"
-              value={reportTitle}
-              onChange={(e) => setReportTitle(e.target.value)}
-            />
-          </div>
-          <button
-            onClick={handleGenerateReport}
-            className="md:self-end bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:bg-gray-500 disabled:cursor-not-allowed"
-            disabled={!canGenerateReport || reportLoading}
-          >
-            {reportLoading ? "Generating..." : "Generate Report"}
-          </button>
-        </div>
-        {!canGenerateReport && (
-          <p className="text-yellow-500 mb-4">
-            You can generate a new report in {Math.ceil(daysLeft)} days.
-          </p>
-        )}
-        {reportError && <p className="text-red-500 mb-4">{reportError}</p>}
-        {report && (
-          <div className="mt-4 p-4 bg-gray-700 rounded-md whitespace-pre-wrap">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="text-xl font-semibold">Generated Report:</h3>
-              <button
-                onClick={() => navigator.clipboard.writeText(report)}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-sm"
-              >
-                Copy
-              </button>
-            </div>
-            <p>{report}</p>
-          </div>
-        )}
-      </div>
+    <GenerateReport />
+      
     </div>
   );
 }

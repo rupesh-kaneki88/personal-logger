@@ -6,6 +6,7 @@ import Report from "@/models/Report";
 import Log from "@/models/Log";
 import dbConnect from "@/lib/dbConnect";
 import { Session } from "next-auth";
+import { decrypt } from "@/lib/encryption";
 
 export async function POST(request: Request) {
   const session: Session | null = await getServerSession(authOptions);
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
     // Compile log data for LLM
     const compiledLogs = logs.map(log => ({
       timestamp: log.timestamp.toISOString(),
-      content: log.content,
+      content: decrypt(log.content),
       category: log.category,
       duration: log.duration,
     }));

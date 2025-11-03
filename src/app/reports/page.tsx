@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { gsap } from 'gsap';
 import LoadingPage from '@/components/LoadingPage';
+import GenerateReport from '@/components/GenerateReport';
 
 export default function ReportsPage() {
   const { data: session, status } = useSession();
@@ -75,7 +76,8 @@ export default function ReportsPage() {
 
   return (
     <div className="container mx-auto p-4 text-white">
-      <h1 className="text-3xl font-bold mb-6">Generated Reports</h1>
+      <GenerateReport />
+      <h1 className="text-3xl font-bold mb-6">Report History</h1>
       {error ? (
         <p className="text-red-500">Error: {error}</p>
       ) : reports.length === 0 ? (
