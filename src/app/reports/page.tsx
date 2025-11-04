@@ -12,6 +12,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openReportId, setOpenReportId] = useState<string | null>(null);
+  const [copiedReportId, setCopiedReportId] = useState<string | null>(null);
   const reportRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
@@ -119,12 +120,36 @@ export default function ReportsPage() {
                   <div className="flex justify-between items-center mb-2">
                     <p className="text-sm text-gray-400">Generated on {new Date(report.generatedAt).toLocaleString()}</p>
                     <button
-                      onClick={() => navigator.clipboard.writeText(report.reportContent)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-sm"
-                      aria-label={`Copy report for ${report.title}`}
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(report.reportContent);
+                          setCopiedReportId(report._id);
+
+                          // reset after 2 seconds
+                          setTimeout(() => setCopiedReportId(null), 6000);
+                        } catch (err) {
+                          console.error("Failed to copy:", err);
+                        }
+                      }}
+                      className={`font-bold py-1 px-2 rounded text-sm text-white transition-colors duration-300 ${
+                          copiedReportId === report._id
+                            ? "bg-gray-500 hover:bg-gray-600"
+                            : "bg-blue-600 hover:bg-blue-700"
+                        }`}
+                      aria-label={
+                        copiedReportId === report._id
+                          ? `Copied report for ${report.title}`
+                          : `Copy report for ${report.title}`
+                      }
                     >
-                      Copy
+                      {copiedReportId === report._id ? "Copied!" : "Copy"}
                     </button>
+
+                    <div className="sr-only" aria-live="polite">
+                      {copiedReportId === report._id ? `Copied report for ${report.title}` : ""}
+                    </div>
+
+
                   </div>
                   <div className="whitespace-pre-wrap">{report.reportContent}</div>
                 </div>

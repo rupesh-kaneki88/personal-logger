@@ -16,14 +16,17 @@ const GenerateReport = () => {
     const [daysLeft, setDaysLeft] = useState(0);
 
     useEffect(() => {
+        console.log("fetching last report date");
         const fetchLastReportDate = async () => {
             if (session) {
                 try {
                     const res = await fetch("/api/reports?limit=1");
                     if (res.ok) {
                         const data = await res.json();
-                        if (data.length > 0) {
-                            setLastReportDate(new Date(data[0].generatedAt));
+                        console.log("Respose: ", data);
+                        if (data) {
+                            console.log("date: ",data.reports[0].generatedAt);
+                            setLastReportDate(new Date(data.reports[0].generatedAt));
                         }
                     }
                 } catch (error) {
@@ -57,7 +60,7 @@ const GenerateReport = () => {
         setReportError("");
         setReport("");
         try {
-            const res = await fetch("/api/report", {
+            const res = await fetch("/api/generate-report", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -18,9 +18,16 @@ export async function GET(request: Request) {
   await dbConnect();
 
   try {
+    const { searchParams } = new URL(request.url);
+    const limitParam = searchParams.get("limit");
+    const limit = limitParam ? parseInt(limitParam) : 0;
+
     const userId = session.user.id;
 
-    const reports = await Report.find({ userId }).sort({ generatedAt: -1 });
+    let query = Report.find({ userId }).sort({ generatedAt: -1 });
+    if (limit > 0) query = query.limit(limit);
+
+    const reports = await query.exec();
 
     return new NextResponse(JSON.stringify({ reports }), {
       status: 200,
