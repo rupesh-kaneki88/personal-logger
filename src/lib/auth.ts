@@ -5,6 +5,44 @@ import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 import nodemailer from 'nodemailer';
 import User from '@/models/User'; // Import the User model
+import { JWT } from "next-auth/jwt";
+
+async function refreshAccessToken(token: JWT): Promise<JWT> {
+  try {
+    const url = "https://oauth2.googleapis.com/token";
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        client_id: process.env.GOOGLE_CLIENT_ID as string,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET as string,
+        grant_type: "refresh_token",
+        refresh_token: token.refreshToken as string,
+      }),
+    });
+
+    const refreshedTokens = await response.json();
+
+    if (!response.ok) {
+      throw refreshedTokens;
+    }
+
+    return {
+      ...token,
+      accessToken: refreshedTokens.access_token,
+      accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
+      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
+    };
+  } catch (error) {
+    console.error("Error refreshing access token", error);
+    return {
+      ...token,
+      error: "RefreshAccessTokenError",
+    };
+  }
+}
 
 // Create a Nodemailer transporter
 const transporter = nodemailer.createTransport({
@@ -19,7 +57,7 @@ const transporter = nodemailer.createTransport({
 
 export const authOptions: AuthOptions = {
   pages: {
-    signIn: "/auth/signin", // Custom sign-in page
+    signIn: "/auth/signin", 
   },
   providers: [
     EmailProvider({
@@ -72,11 +110,14 @@ export const authOptions: AuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
       authorization: {
         params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code",
           scope: 'openid email profile https://www.googleapis.com/auth/calendar.events',
         },
       },
     }),
-    // Add more providers here as needed
+    
   ],
   adapter: MongoDBAdapter(clientPromise),
   callbacks: {
@@ -124,42 +165,31 @@ export const authOptions: AuthOptions = {
       // If no existing user is found, or for other providers, allow the default sign-in behavior.
       return true;
     },
-    async jwt({ token, user, account, trigger, session }) {
-      // If the user is signing in, add their ID and name to the token
-      if (user) {
-        const dbUser = await User.findById(user.id);
+    async jwt({ token, user, account }) {
+      // Initial sign in
+      if (account && user) {
         token.id = user.id;
-        token.name = user.name;
-        token.lastReportGeneratedAt = dbUser?.lastReportGeneratedAt;
-      }
-      // If a new account is linked or signed in, store the access token
-      if (account) {
         token.accessToken = account.access_token;
+        token.accessTokenExpires = (account.expires_at as number) * 1000;
+        token.refreshToken = account.refresh_token;
+        return token;
       }
 
-      // If the session is being updated (e.g., with a new name)
-      if (trigger === "update" && session?.name) {
-        token.name = session.name;
+      // Return previous token if the access token has not expired yet
+      if (Date.now() < (token.accessTokenExpires as number)) {
+        return token;
       }
 
-      // Ensure the user ID is always present
-      if (!token.id && token.sub) {
-        token.id = token.sub;
-      }
-
-      return token;
+      // Access token has expired, try to update it
+      return refreshAccessToken(token);
     },
     async session({ session, token }) {
-      // Add the user's ID and name from the token to the session
       if (session.user) {
         session.user.id = token.id as string;
         session.user.name = token.name as string;
-        session.user.lastReportGeneratedAt = token.lastReportGeneratedAt as Date;
       }
-      // Add the access token to the session
-      if (token.accessToken) {
-        session.accessToken = token.accessToken as string;
-      }
+      session.accessToken = token.accessToken as string;
+      session.error = token.error as string;
       return session;
     },
   },
@@ -168,3 +198,4 @@ export const authOptions: AuthOptions = {
     strategy: "jwt",
   },
 };
+

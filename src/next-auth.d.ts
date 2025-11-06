@@ -6,9 +6,10 @@ declare module "next-auth" {
    * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
    */
   interface Session {
-    accessToken?: string; // Add accessToken to Session
+    accessToken?: string;
+    error?: string;
     user: {
-      id: string; // Add the 'id' property here
+      id: string;
       lastReportGeneratedAt?: Date;
     } & DefaultSession["user"];
   }
@@ -18,7 +19,7 @@ declare module "next-auth" {
    * or the second parameter of the `session` callback, when using a database.
    */
   interface User extends DefaultUser {
-    id: string; // Add the 'id' property here
+    id: string;
     lastReportGeneratedAt?: Date;
   }
 }
@@ -26,6 +27,11 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   /** Returned by the `jwt` callback */
   interface JWT {
-    accessToken?: string; // Add accessToken to JWT
+    id?: string;
+    accessToken?: string;
+    accessTokenExpires?: number;
+    refreshToken?: string;
+    error?: string;
+    lastReportGeneratedAt?: Date;
   }
 }

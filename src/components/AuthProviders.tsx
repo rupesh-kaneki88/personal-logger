@@ -12,7 +12,7 @@ function AuthContent({ children }: { children: React.ReactNode }) {
       <main className="flex-grow"> {/* Added flex-grow to push footer to bottom */}
         {children}
       </main>
-      <Footer /> {/* Render Footer here */}
+      <Footer /> 
     </div>
   );
 }
