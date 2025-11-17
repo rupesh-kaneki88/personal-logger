@@ -22,7 +22,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{id:
 
   try {
     const body = await request.json();
-    const { duration, category } = body;
+    const { duration, category, description } = body;
 
     const task = await Task.findById(id);
 
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{id:
     const newLog = new Log({
       userId: session.user.id,
       title: task.title,
-      content: task.description || '',
+      content: description || task.description || '',
       category,
       duration,
       timestamp: new Date(),

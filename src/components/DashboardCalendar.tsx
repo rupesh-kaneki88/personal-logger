@@ -41,12 +41,11 @@ export default function DashboardCalendar({ tasks, onDayClick, selectedDate, sho
           if (res.ok) {
             const data = await res.json();
             setGoogleEvents(data);
-            setIsGoogleConnected(true); // Connection is good
+            setIsGoogleConnected(true);
           } else {
-            // Handle cases where token is invalid or permissions are denied
             setIsGoogleConnected(false);
             setGoogleEvents([]);
-            if (res.status !== 403) { // Don't log expected permission errors
+            if (res.status !== 403) {
               console.error('Failed to fetch Google Calendar events');
             }
           }
@@ -55,16 +54,14 @@ export default function DashboardCalendar({ tasks, onDayClick, selectedDate, sho
           setIsGoogleConnected(false);
         }
       } else {
-        // No access token means not connected
         setIsGoogleConnected(false);
       }
     };
 
     fetchGoogleEvents();
-  }, [session?.accessToken]); // Refetch only when session changes
+  }, [session?.accessToken]); 
 
   const handleConnectGoogleCalendar = () => {
-    // Using signIn will link the account if the user is already logged in
     signIn('google', { callbackUrl: window.location.href });
   };
 

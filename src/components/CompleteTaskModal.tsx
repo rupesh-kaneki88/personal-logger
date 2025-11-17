@@ -7,8 +7,8 @@ import { gsap } from 'gsap';
 interface CompleteTaskModalProps {
   task: ITask;
   onClose: () => void;
-  onConfirm: (task: ITask, duration?: number, category?: string) => void;
-  triggerElement?: HTMLElement | null; // New prop
+  onConfirm: (task: ITask, duration?: number, category?: string, description?: string) => void;
+  triggerElement?: HTMLElement | null;
 }
 
 export default function CompleteTaskModal({
@@ -19,13 +19,20 @@ export default function CompleteTaskModal({
 }: CompleteTaskModalProps) {
   const [duration, setDuration] = useState<number | undefined>(undefined);
   const [category, setCategory] = useState('None');
+  const [description, setDescription] = useState(task.description || '');
   const [loading, setLoading] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const previouslyFocusedElement = useRef<HTMLElement | null>(null);
 
+  useEffect(() => {
+    if (task) {
+      setDescription(task.description || '');
+    }
+  }, [task]);
+
   useGSAP(() => {
     if (modalRef.current) {
-      if (task) { // Modal is opening
+      if (task) {
         previouslyFocusedElement.current = triggerElement || document.activeElement as HTMLElement;
         gsap.fromTo(
           modalRef.current,
@@ -36,7 +43,7 @@ export default function CompleteTaskModal({
             }
           }
         );
-      } else { // Modal is closing
+      } else {
         gsap.to(modalRef.current, {
           scale: 0.8,
           opacity: 0,
@@ -48,7 +55,7 @@ export default function CompleteTaskModal({
         });
       }
     }
-  }, { scope: modalRef, dependencies: [task] }); // Depend on 'task' to trigger open/close
+  }, { scope: modalRef, dependencies: [task] });
 
   const handleCloseAnimation = (callback: () => void) => {
     gsap.to(modalRef.current, {
@@ -62,10 +69,10 @@ export default function CompleteTaskModal({
 
   const handleConfirm = () => {
     setLoading(true);
-    handleCloseAnimation(() => onConfirm(task, duration, category === 'None' ? undefined : category));
+    handleCloseAnimation(() => onConfirm(task, duration, category === 'None' ? undefined : category, description));
   };
 
-  if (!task) return null; // Render only if a task is provided
+  if (!task) return null;
 
   return (
     <div
@@ -73,14 +80,25 @@ export default function CompleteTaskModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="complete-task-modal-title"
-      tabIndex={-1} // Make the modal container focusable
-      ref={modalRef} // Attach ref to the outer div for focus
+      tabIndex={-1}
+      ref={modalRef}
     >
       <div className="bg-gray-800 p-6 sm:p-8 rounded-lg shadow-xl border border-gray-700 w-full max-w-sm sm:max-w-md lg:max-w-lg text-white">
         <h2 id="complete-task-modal-title" className="text-2xl font-bold text-white mb-4">Complete Task & Log</h2>
         <p className="text-gray-300 mb-6">You are about to mark the task "{task.title}" as complete and create a log entry for it.</p>
         
         <div className="space-y-4">
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">Description</label>
+            <textarea
+              id="description"
+              className="appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-gray-700"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              placeholder="Enter a description for the log"
+            />
+          </div>
           <div>
             <label htmlFor="duration" className="block text-sm font-medium text-gray-300 mb-1">Duration (minutes, optional)</label>
             <input

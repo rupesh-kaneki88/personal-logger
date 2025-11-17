@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import LoadingPage from '@/components/LoadingPage';
+import TaskWeekView from '@/components/TaskWeekView';
 
 export default function TasksPage() {
   const { data: session, status } = useSession();
@@ -120,7 +121,7 @@ export default function TasksPage() {
     setShowCompleteModal(true);
   };
 
-  const handleConfirmComplete = async (task: ITask, duration?: number, category?: string) => {
+  const handleConfirmComplete = async (task: ITask, duration?: number, category?: string, description?: string) => {
     if (!task) return;
     try {
       const response = await fetch(`/api/tasks/${task._id}/log`, {
@@ -128,7 +129,7 @@ export default function TasksPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ duration, category }),
+        body: JSON.stringify({ duration, category, description }),
       });
       if (!response.ok) {
         throw new Error('Failed to complete and log task');
@@ -216,6 +217,10 @@ export default function TasksPage() {
             onEditClick={handleEditClick}
           />
         </div>
+      </div>
+
+      <div className="mt-8">
+        <TaskWeekView tasks={tasks} />
       </div>
 
       {showDeleteModal && taskToDelete && (
