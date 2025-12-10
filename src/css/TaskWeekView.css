@@ -137,12 +137,12 @@
   
   /* === TIME SLOTS === */
   .rbc-time-slot {
-    border-top: 1px solid #3c4043;
+    border-top: 0.5px solid #3c4043;
   }
   
   .rbc-timeslot-group {
     border-left: 1px solid #3c4043;
-    min-height: 60px;
+    min-height: 50px;
   }
   
   .rbc-time-content {
