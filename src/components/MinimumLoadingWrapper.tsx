@@ -13,7 +13,7 @@ export default function MinimumLoadingWrapper({ children }: MinimumLoadingWrappe
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowChildren(true);
-    }, 2000);
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, []);

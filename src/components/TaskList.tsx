@@ -1,7 +1,7 @@
 "use client";
 
+import React, { useRef } from 'react';
 import { ITask } from '@/models/Task';
-import { useRef } from 'react';
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 
@@ -13,7 +13,7 @@ interface TaskListProps {
   onCompleteClick: (task: ITask, trigger: HTMLElement) => void;
 }
 
-export default function TaskList({ tasks, onTaskUpdated, onDeleteClick, onEditClick, onCompleteClick }: TaskListProps) {
+function TaskList({ tasks, onTaskUpdated, onDeleteClick, onEditClick, onCompleteClick }: TaskListProps) {
   const listRef = useRef(null);
 
   useGSAP(() => {
@@ -147,3 +147,5 @@ export default function TaskList({ tasks, onTaskUpdated, onDeleteClick, onEditCl
     </div>
   );
 }
+
+export default React.memo(TaskList);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -12,7 +12,7 @@ interface TaskEntryFormProps {
   onTaskAdded: (task: ITask) => void;
 }
 
-export default function TaskEntryForm({ onTaskAdded }: TaskEntryFormProps) {
+function TaskEntryForm({ onTaskAdded }: TaskEntryFormProps) {
   const { data: session } = useSession();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -199,3 +199,5 @@ export default function TaskEntryForm({ onTaskAdded }: TaskEntryFormProps) {
     </div>
   );
 }
+
+export default React.memo(TaskEntryForm);

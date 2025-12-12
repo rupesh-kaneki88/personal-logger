@@ -1,36 +1,26 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { gsap } from "gsap";
-import { useGSAP } from "@gsap/react";
-import EditLogModal from "@/components/EditLogModal"; // Import the new modal component
-import DeleteConfirmationModal from "@/components/DeleteConfirmationModal"; // Import the new delete modal
+import EditLogModal from "@/components/EditLogModal";
+import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
 import { toast } from "sonner";
 import LoadingPage from "@/components/LoadingPage";
+import LogItem from "@/components/LogItem";
 
 export default function LogsPage() {
   const { data: session, status } = useSession();
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (session?.user?.id) {
-      fetchAllLogs();
-    } else if (status === "unauthenticated") {
-      setLoading(false);
-      setError("Please sign in to view your logs.");
-    }
-  }, [session, status]);
-
-  const fetchAllLogs = async () => {
+  const fetchAllLogs = useCallback(async () => {
+    if (!session?.user?.id) return;
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/logs?userId=${session?.user?.id}&all=true`); // Assuming 'all=true' fetches all logs
+      const response = await fetch(`/api/logs?userId=${session.user.id}&all=true`);
       if (!response.ok) {
         throw new Error("Failed to fetch logs.");
       }
@@ -41,20 +31,29 @@ export default function LogsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session]);
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchAllLogs();
+    } else if (status === "unauthenticated") {
+      setLoading(false);
+      setError("Please sign in to view your logs.");
+    }
+  }, [session, status, fetchAllLogs]);
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [logToDelete, setLogToDelete] = useState<{ id: string; title: string } | null>(null);
   const [deleteTriggerElement, setDeleteTriggerElement] = useState<HTMLElement | null>(null);
 
-  const handleDelete = (e: React.MouseEvent<HTMLButtonElement>, logId: string, logTitle: string) => {
+  const handleDelete = useCallback((e: React.MouseEvent<HTMLButtonElement>, logId: string, logTitle: string) => {
     e.stopPropagation();
     setLogToDelete({ id: logId, title: logTitle });
     setDeleteTriggerElement(e.currentTarget);
     setIsDeleteModalOpen(true);
-  };
+  }, []);
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = useCallback(async () => {
     if (!logToDelete) return;
 
     const loadingToast = toast.loading("Deleting log...");
@@ -69,37 +68,37 @@ export default function LogsPage() {
       }
 
       toast.success("Log deleted successfully!", { id: loadingToast });
-      fetchAllLogs(); // Refresh logs after successful deletion
+      fetchAllLogs();
       setIsDeleteModalOpen(false);
       setLogToDelete(null);
     } catch (err: any) {
       setError(err.message);
       toast.error(err.message || "Failed to delete log.", { id: loadingToast });
     }
-  };
+  }, [logToDelete, fetchAllLogs]);
 
-  const handleCancelDelete = () => {
+  const handleCancelDelete = useCallback(() => {
     setIsDeleteModalOpen(false);
     setLogToDelete(null);
-  };
+  }, []);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentLog, setCurrentLog] = useState<any | null>(null);
   const [editTriggerElement, setEditTriggerElement] = useState<HTMLElement | null>(null);
 
-  const handleEdit = (e: React.MouseEvent<HTMLButtonElement>, log: any) => {
+  const handleEdit = useCallback((e: React.MouseEvent<HTMLButtonElement>, log: any) => {
     e.stopPropagation();
     setCurrentLog(log);
     setEditTriggerElement(e.currentTarget);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setIsModalOpen(false);
     setCurrentLog(null);
-  };
+  }, []);
 
-  const handleSaveEditedLog = async (updatedLog: any) => {
+  const handleSaveEditedLog = useCallback(async (updatedLog: any) => {
     try {
       const response = await fetch(`/api/logs/${updatedLog._id}`, {
         method: "PUT",
@@ -113,42 +112,13 @@ export default function LogsPage() {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to update log.");
       }
-
-      // Update the logs in the local state
-      setLogs(logs.map((log) => (log._id === updatedLog._id ? updatedLog : log)));
-      fetchAllLogs(); // Refresh logs after successful update
+      
+      fetchAllLogs();
     } catch (err: any) {
       setError(err.message);
-      throw err; // Re-throw to be caught by the modal's handleSubmit
+      throw err;
     }
-  };
-
-  const logContentRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-
-  const toggleExpand = (logId: string) => {
-    const isExpanding = expandedLogId !== logId;
-    setExpandedLogId(isExpanding ? logId : null);
-
-    const contentRef = logContentRefs.current[logId];
-    if (contentRef) {
-      if (isExpanding) {
-        gsap.fromTo(
-          contentRef,
-          { height: 0, opacity: 0, overflow: "hidden" },
-          { height: "auto", opacity: 1, duration: 0.7, ease: "elastic.out(1, 0.75)", overflow: "hidden" }
-        );
-      } else {
-        gsap.to(contentRef, {
-          height: 0,
-          opacity: 0,
-          duration: 0.7, // Increased duration for a more noticeable elastic effect
-          ease: "elastic.out(1, 0.75)", // Changed to elastic.out for closing
-          overflow: "hidden",
-          onComplete: () => {contentRef.style.display = "none"}, // Hide after collapse
-        });
-      }
-    }
-  };
+  }, [fetchAllLogs]);
 
   if (status === "loading" || loading) {
     return <LoadingPage />;
@@ -179,60 +149,12 @@ export default function LogsPage() {
       ) : (
         <div className="space-y-4">
           {logs.map((log) => (
-            <div
+            <LogItem 
               key={log._id.toString()}
-              className="bg-gray-800 shadow-md rounded-lg p-4 border border-gray-700 cursor-pointer"
-              onClick={() => toggleExpand(log._id.toString())}
-              role="button"
-              aria-expanded={expandedLogId === log._id.toString()}
-              aria-controls={`log-content-${log._id.toString()}`}
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  toggleExpand(log._id.toString());
-                }
-              }}
-            >
-              <div
-                className="flex justify-between items-center"
-                aria-label={`Log: ${log.title}`}>
-                <h3 className="text-xl font-semibold text-white">{log.title}
-                  <span className="sr-only">. </span>  
-                </h3>                
-                <div className="flex space-x-2">
-                  <button
-                    onClick={(e) => handleEdit(e, log)}
-                    className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-1 px-3 rounded text-sm"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={(e) => handleDelete(e, log._id.toString(), log.title)}
-                    className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-              {/* Always render the div, but control its visibility and height with GSAP */}
-              <div
-                id={`log-content-${log._id.toString()}`}
-                ref={(el) => {logContentRefs.current[log._id.toString()] = el}}
-                className="mt-4 border-t border-gray-700 pt-4"
-                style={{ display: expandedLogId === log._id.toString() ? "block" : "none", height: expandedLogId === log._id.toString() ? "auto" : 0 }}
-              >
-                <p id={`log-description-${log._id}`} className="text-gray-200">{log.content}</p>
-                <p className="text-sm text-gray-400 mt-2">
-                  <span>Category: {log.category || "N/A"}</span>
-                  <span className="sr-only">. </span>
-                  <span aria-hidden="true"> | </span>
-                  <span>Duration: {log.duration || "N/A"} mins</span>
-                  <span className="sr-only">. </span>
-                  <span aria-hidden="true"> | </span>
-                  <span>Logged at: {new Date(log.timestamp).toLocaleString()}</span>
-                </p>
-              </div>
-            </div>
+              log={log}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
           ))}
         </div>
       )}

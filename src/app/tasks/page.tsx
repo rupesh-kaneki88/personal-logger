@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import TaskEntryForm from '@/components/TaskEntryForm';
 import TaskList from '@/components/TaskList';
@@ -36,7 +36,7 @@ export default function TasksPage() {
     gsap.from(pageRef.current, { opacity: 0, y: 50, duration: 0.8, ease: "power3.out" });
   }, { scope: pageRef });
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     if (!session?.user?.id) return;
     setLoading(true);
     setError(null);
@@ -53,7 +53,7 @@ export default function TasksPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session]);
 
   useEffect(() => {
     if (session) {
@@ -65,27 +65,27 @@ export default function TasksPage() {
       };
       checkGoogleConnection();
     }
-  }, [session]);
+  }, [session, fetchTasks]);
 
-  const handleTaskAdded = (newTask: ITask) => {
+  const handleTaskAdded = useCallback((newTask: ITask) => {
     setTasks((prevTasks) => [newTask, ...prevTasks]);
     toast.success('Task added successfully!');
-  };
+  }, []);
 
-  const handleTaskUpdated = (updatedTask: ITask) => {
+  const handleTaskUpdated = useCallback((updatedTask: ITask) => {
     setTasks((prevTasks) =>
       prevTasks.map((task) => (task._id === updatedTask._id ? updatedTask : task))
     );
     toast.success('Task updated successfully!');
-  };
+  }, []);
 
-  const handleDeleteClick = (task: ITask, trigger: HTMLElement) => {
+  const handleDeleteClick = useCallback((task: ITask, trigger: HTMLElement) => {
     setTaskToDelete(task);
     setDeleteTriggerElement(trigger);
     setShowDeleteModal(true);
-  };
+  }, []);
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = useCallback(async () => {
     if (!taskToDelete) return;
     try {
       const response = await fetch(`/api/tasks/${taskToDelete._id}`, {
@@ -108,20 +108,20 @@ export default function TasksPage() {
       setShowDeleteModal(false);
       setTaskToDelete(null);
     }
-  };
+  }, [taskToDelete, googleConnected]);
 
-  const handleCancelDelete = () => {
+  const handleCancelDelete = useCallback(() => {
     setShowDeleteModal(false);
     setTaskToDelete(null);
-  };
+  }, []);
 
-  const handleCompleteClick = (task: ITask, trigger: HTMLElement) => {
+  const handleCompleteClick = useCallback((task: ITask, trigger: HTMLElement) => {
     setTaskToComplete(task);
     setCompleteTriggerElement(trigger);
     setShowCompleteModal(true);
-  };
+  }, []);
 
-  const handleConfirmComplete = async (task: ITask, duration?: number, category?: string, description?: string) => {
+  const handleConfirmComplete = useCallback(async (task: ITask, duration?: number, category?: string, description?: string) => {
     if (!task) return;
     try {
       const response = await fetch(`/api/tasks/${task._id}/log`, {
@@ -136,27 +136,27 @@ export default function TasksPage() {
       }
       setTasks((prevTasks) => prevTasks.filter((t) => t._id !== task._id));
       toast.success('Task completed and logged successfully!');
-    } catch (err: any) {
+    } catch (err: any){
       setError(err.message);
       toast.error(err.message);
     } finally {
       setShowCompleteModal(false);
       setTaskToComplete(null);
     }
-  };
+  }, []);
 
-  const handleCancelComplete = () => {
+  const handleCancelComplete = useCallback(() => {
     setShowCompleteModal(false);
     setTaskToComplete(null);
-  };
+  }, []);
 
-  const handleEditClick = (task: ITask, trigger: HTMLElement) => {
+  const handleEditClick = useCallback((task: ITask, trigger: HTMLElement) => {
     setTaskToEdit(task);
     setEditTriggerElement(trigger);
     setShowEditModal(true);
-  };
+  }, []);
 
-  const handleSaveEditedTask = async (updatedTask: ITask) => {
+  const handleSaveEditedTask = useCallback(async (updatedTask: ITask) => {
     try {
       const response = await fetch(`/api/tasks/${updatedTask._id}`, {
         method: 'PUT',
@@ -177,12 +177,12 @@ export default function TasksPage() {
       setError(err.message);
       toast.error(err.message);
     }
-  };
+  }, [googleConnected, handleTaskUpdated]);
 
-  const handleCloseEditModal = () => {
+  const handleCloseEditModal = useCallback(() => {
     setShowEditModal(false);
     setTaskToEdit(null);
-  };
+  }, []);
 
   if (status === 'loading' || loading) {
     return <LoadingPage />;
