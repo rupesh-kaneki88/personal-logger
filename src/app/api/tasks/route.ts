@@ -44,28 +44,22 @@ export async function POST(req: NextRequest) {
           auth: oauth2Client,
         });
 
-        const eventStart = new Date(dueDate);
-        if (time) {
-          const [hours, minutes] = time.split(':').map(Number);
-          eventStart.setHours(hours);
-          eventStart.setMinutes(minutes);
-        }
-
-        const eventEnd = new Date(eventStart.getTime() + 60 * 60 * 1000);
-
-
-        const event = {
+        const event: any = {
           summary: title,
           description: description,
-          start: {
-            dateTime: eventStart.toISOString(),
-            timeZone: 'UTC',
-          },
-          end: {
-            dateTime: eventEnd.toISOString(),
-            timeZone: 'UTC',
-          },
         };
+
+        if (time) {
+          // Timed event. dueDate is an ISO string from the client.
+          const eventStart = new Date(dueDate);
+          const eventEnd = new Date(eventStart.getTime() + 60 * 60 * 1000); // 1-hour duration
+          event.start = { dateTime: eventStart.toISOString(), timeZone: 'UTC' };
+          event.end = { dateTime: eventEnd.toISOString(), timeZone: 'UTC' };
+        } else if (dueDate) {
+          // All-day event. dueDate is a 'YYYY-MM-DD' string from the client.
+          event.start = { date: dueDate };
+          event.end = { date: dueDate };
+        }
 
         const createdEvent = await calendar.events.insert({
           calendarId: 'primary',

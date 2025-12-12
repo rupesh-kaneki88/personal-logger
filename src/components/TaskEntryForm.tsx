@@ -63,20 +63,33 @@ export default function TaskEntryForm({ onTaskAdded }: TaskEntryFormProps) {
     setLoading(true);
     setError(null);
     try {
+      const body: any = {
+        userId: session!.user!.id,
+        title,
+        description,
+        time,
+        priority,
+        createGoogleEvent,
+      };
+
+      if (dueDate) {
+        if (time) {
+          const dateString = `${dueDate}T${time}`;
+          const localDate = new Date(dateString);
+          body.dueDate = localDate.toISOString();
+        } else {
+          body.dueDate = dueDate;
+        }
+      } else {
+        body.dueDate = undefined;
+      }
+
       const response = await fetch("/api/tasks", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          userId: session!.user!.id,
-          title,
-          description,
-          dueDate: dueDate ? new Date(dueDate) : undefined,
-          time,
-          priority,
-          createGoogleEvent, // Pass this flag to the API
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {

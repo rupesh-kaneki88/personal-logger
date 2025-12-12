@@ -11,7 +11,7 @@ function AuthContent({ children }: { children: React.ReactNode }) {
       <Header /> 
       <main className="flex-grow"> 
         {children}
-      </main>
+      </main>P
       <Footer /> 
     </div>
   );
